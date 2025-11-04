@@ -1,0 +1,5 @@
+com/infotech/model/Category.class
+com/infotech/controller/CategoryController.class
+com/infotech/UserCategoryApiApplication.class
+com/infotech/model/DataItem.class
+com/infotech/repository/CategoryRepository.class

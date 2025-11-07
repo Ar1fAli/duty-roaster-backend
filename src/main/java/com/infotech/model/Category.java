@@ -1,17 +1,10 @@
 package com.infotech.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,12 +21,19 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    private Long vip_id;
+    private Long contact_no;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<DataItem> dataItems = new ArrayList<>();
+    private String vip_name;
+    private String vip_email;
+    private String vip_designation;
 
+    //
+    // @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval =
+    // true)
+    // @JsonManagedReference
+    // private List<DataItem> dataItems = new ArrayList<>();
+    //
     // getters and setters
 
     // @Id

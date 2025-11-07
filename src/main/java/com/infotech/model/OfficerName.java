@@ -1,3 +1,4 @@
+
 package com.infotech.model;
 
 import jakarta.persistence.Entity;
@@ -13,19 +14,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class DataItem {
+public class OfficerName {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title;
+    private String Name;
     // private String description;
 
     // @ManyToOne(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "category_id")
+    // @JoinColumn(name = "officer_id")
     // @JsonBackReference
-    // private Category category;
-
+    // private Officer officer;
+    //
     // getters and setters
 }

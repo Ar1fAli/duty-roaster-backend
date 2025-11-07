@@ -1,5 +1,9 @@
 com/infotech/model/Category.class
 com/infotech/controller/CategoryController.class
+com/infotech/repository/CategoryRepository.class
+com/infotech/controller/OfficerController.class
+com/infotech/repository/OfficerRepository.class
 com/infotech/UserCategoryApiApplication.class
 com/infotech/model/DataItem.class
-com/infotech/repository/CategoryRepository.class
+com/infotech/model/OfficerName.class
+com/infotech/model/Officer.class

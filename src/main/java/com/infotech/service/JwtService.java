@@ -10,7 +10,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 @Service
 public class JwtService {
 
-    private final String SECRET = "MY_SECRET_KEY_CHANGE_THIS";
+    private final String SECRET = "Jd92jskA7wXx0e4oU03cHfK4fEjXPOZFX2yb0U9Hj7FV6Vn+oqm8CyhRiv6cvGZh";
 
     public String generateToken(String username) {
         return Jwts.builder()

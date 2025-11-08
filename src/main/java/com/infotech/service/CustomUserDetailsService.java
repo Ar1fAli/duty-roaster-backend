@@ -1,29 +1,31 @@
 
 package com.infotech.service;
 
-import com.infotech.repository.UserRepository;
+import com.infotech.entity.AdminEntity;
+import com.infotech.repository.AdminRepsitory;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    @Autowired
-    private UserRepository repo;
+    private final AdminRepsitory adminRepsitory;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        var user = repo.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found"));
+        AdminEntity admin = adminRepsitory.findByAdminUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        return User.withUsername(user.getUsername())
-                .password(user.getPassword())
-                .roles(user.getRole())
+        return org.springframework.security.core.userdetails.User.builder()
+                .username(admin.getAdminUsername())
+                .password(admin.getAdminPassword()) // must be BCrypt hash
+                .roles("ADMIN")
                 .build();
     }
 }

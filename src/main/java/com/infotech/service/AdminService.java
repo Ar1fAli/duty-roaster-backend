@@ -6,7 +6,9 @@ import com.infotech.entity.AdminEntity;
 
 public interface AdminService {
 
-    AdminEntity addAdmin(AdminEntity adminEntity);
+    String register(AdminEntity adminEntity);
+
+    public String login(AdminEntity adminEntity);
 
     List<AdminEntity> getAdmin();
 }

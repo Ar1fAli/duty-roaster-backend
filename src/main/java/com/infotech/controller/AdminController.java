@@ -23,15 +23,20 @@ public class AdminController {
     private final AdminService adminService;
 
     @PostMapping("/register")
-    AdminEntity addAdmin(@RequestBody AdminEntity adminEntity) {
-        AdminEntity admin = adminService.addAdmin(adminEntity);
-        return admin;
+    String register(@RequestBody AdminEntity adminEntity) {
+        String res = adminService.register(adminEntity);
+        return res;
     }
 
     @GetMapping("/register")
     List<AdminEntity> getAdmin() {
         List<AdminEntity> admin = adminService.getAdmin();
         return admin;
+    }
+
+    @PostMapping("/login")
+    public String login(@RequestBody AdminEntity adminEntity) {
+        return adminService.login(adminEntity);
     }
 
 }

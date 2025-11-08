@@ -1,5 +1,5 @@
 
-package com.infotech.model;
+package com.infotech.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

@@ -1,6 +1,6 @@
 package com.infotech.repository;
 
-import com.infotech.model.Officer;
+import com.infotech.entity.Officer;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

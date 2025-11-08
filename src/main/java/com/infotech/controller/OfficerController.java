@@ -2,7 +2,7 @@ package com.infotech.controller;
 
 import java.util.List;
 
-import com.infotech.model.Officer;
+import com.infotech.entity.Officer;
 import com.infotech.repository.OfficerRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;

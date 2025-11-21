@@ -1,0 +1,182 @@
+package com.infotech.service;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.infotech.dto.AssignmentResponse;
+import com.infotech.dto.AssignmentSummary;
+import com.infotech.dto.GuardAssignmentRequest;
+import com.infotech.dto.GuardLevelRequest;
+import com.infotech.entity.Category;
+import com.infotech.entity.Officer;
+import com.infotech.entity.UserGuardAssignment;
+import com.infotech.repository.CategoryRepository;
+import com.infotech.repository.OfficerRepository;
+import com.infotech.repository.UserGuardAssignmentRepository;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class AssignmentService {
+
+    private final CategoryRepository categoryRepository;
+    private final OfficerRepository officerRepository;
+    private final UserGuardAssignmentRepository assignmentRepository;
+
+    private static final int MAX_REUSE = 4;
+
+    @Transactional
+    public AssignmentResponse assignGuardsAutomatically(GuardAssignmentRequest request) {
+
+        Category user = categoryRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<UserGuardAssignment> allAssignments = new ArrayList<>();
+        List<AssignmentSummary> summaries = new ArrayList<>();
+
+        for (GuardLevelRequest levelReq : request.getLevels()) {
+
+            String level = levelReq.getGuardLevel();
+            int requestedCount = levelReq.getNumberOfGuards();
+            String levelAsString = String.valueOf(level);
+
+            // 1) Fetch all previous assignments of this user for this level
+            List<UserGuardAssignment> previous = assignmentRepository
+                    .findByUserAndGuardLevel(user, level);
+
+            // 2) Identify currently ACTIVE guards → exclude
+            Set<Long> activeGuardIds = previous.stream()
+                    .filter(a -> "Active".equalsIgnoreCase(a.getStatus()))
+                    .map(a -> a.getOfficer().getId())
+                    .collect(Collectors.toSet());
+
+            // 3) Inactive previous assignments (Reusable)
+            List<UserGuardAssignment> inactivePrevious = previous.stream()
+                    .filter(a -> !"Active".equalsIgnoreCase(a.getStatus()))
+                    .collect(Collectors.toList());
+
+            // 4) Only guards with required level & guard_status = Inactive
+            List<Officer> allGuardsOfLevel = officerRepository.findAll().stream()
+                    .filter(o -> levelAsString.equals(o.getRank()))
+                    .filter(o -> "Inactive".equalsIgnoreCase(o.getStatus())) // FIXED
+                    .collect(Collectors.toList());
+
+            // 5) Remove ACTIVE guardIds
+            List<Officer> availableGuards = allGuardsOfLevel.stream()
+                    .filter(o -> !activeGuardIds.contains(o.getId()))
+                    .collect(Collectors.toList());
+
+            // 6) Previous inactive: id → timesAssigned
+            Map<Long, Integer> timesMap = inactivePrevious.stream()
+                    .collect(Collectors.toMap(
+                            a -> a.getOfficer().getId(),
+                            UserGuardAssignment::getTimesAssigned));
+
+            // 7) Exclude guards exceeding MAX_REUSE
+            Set<Long> excludedIds = timesMap.entrySet().stream()
+                    .filter(e -> e.getValue() >= MAX_REUSE)
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toSet());
+
+            List<Officer> cleanedAvailable = availableGuards.stream()
+                    .filter(o -> !excludedIds.contains(o.getId()))
+                    .collect(Collectors.toList());
+
+            // 8) Reusable previous guards
+            List<Officer> reusable = inactivePrevious.stream()
+                    .filter(a -> a.getTimesAssigned() < MAX_REUSE)
+                    .map(UserGuardAssignment::getOfficer)
+                    .filter(o -> !excludedIds.contains(o.getId()))
+                    .collect(Collectors.toList());
+
+            // 9) Combined (Unique)
+            Map<Long, Officer> combinedMap = new LinkedHashMap<>();
+            cleanedAvailable.forEach(o -> combinedMap.put(o.getId(), o));
+            reusable.forEach(o -> combinedMap.putIfAbsent(o.getId(), o));
+
+            List<Officer> combinedPool = new ArrayList<>(combinedMap.values());
+
+            // 10) Random selection
+            Collections.shuffle(combinedPool);
+            int assignCount = Math.min(requestedCount, combinedPool.size());
+            List<Officer> selected = combinedPool.subList(0, assignCount);
+
+            // 11) Create or update assignments
+            for (Officer officer : selected) {
+
+                // Mark officer as Active (IMPORTANT FIX)
+                officer.setStatus("Active");
+                officerRepository.save(officer);
+
+                Optional<UserGuardAssignment> existing = inactivePrevious.stream()
+                        .filter(a -> a.getOfficer().getId().equals(officer.getId()))
+                        .findFirst();
+
+                UserGuardAssignment assignment;
+
+                if (existing.isPresent()) {
+                    assignment = existing.get();
+                    assignment.setTimesAssigned(assignment.getTimesAssigned() + 1);
+                } else {
+                    assignment = new UserGuardAssignment();
+                    assignment.setCategory(user);
+                    assignment.setOfficer(officer);
+                    assignment.setTimesAssigned(1);
+                }
+
+                assignment.setStatus("Active");
+                assignment.setAssignedAt(LocalDateTime.now());
+                allAssignments.add(assignment);
+            }
+
+            // 12) Summary
+            int missing = requestedCount - assignCount;
+            summaries.add(new AssignmentSummary(level, requestedCount, assignCount, Math.max(0, missing)));
+        }
+
+        // 13) Save all assignment records
+        List<UserGuardAssignment> saved = assignmentRepository.saveAll(allAssignments);
+
+        AssignmentResponse resp = new AssignmentResponse();
+        resp.setSummary(summaries);
+        resp.setDetails(saved);
+        return resp;
+    }
+
+
+
+  @Transactional(readOnly = true)
+    public AssignmentResponse getAssignmentResponseForCategory(Long categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        List<UserGuardAssignment> allForCategory = assignmentRepository.findByCategory(category);
+
+        // Build summary with assigned counts by officer.rank
+        Map<String, Long> assignedByLevel = allForCategory.stream()
+                .filter(a -> "Active".equalsIgnoreCase(a.getStatus()))
+                .collect(Collectors.groupingBy(a -> a.getOfficer().getRank(), Collectors.counting()));
+
+        List<AssignmentSummary> summaries = assignedByLevel.entrySet().stream()
+                .map(e -> new AssignmentSummary(e.getKey(), 0, e.getValue().intValue(), 0))
+                .collect(Collectors.toList());
+
+        AssignmentResponse resp = new AssignmentResponse();
+        resp.setSummary(summaries);
+        resp.setDetails(allForCategory.stream()
+                .filter(a -> "Active".equalsIgnoreCase(a.getStatus()))
+                .collect(Collectors.toList()));
+        return resp;
+    }
+}

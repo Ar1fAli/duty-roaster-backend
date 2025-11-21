@@ -11,4 +11,6 @@ public interface AdminService {
     public String login(AdminEntity adminEntity);
 
     List<AdminEntity> getAdmin();
+
+    AdminEntity updateCategory(Long id, AdminEntity admindat);
 }

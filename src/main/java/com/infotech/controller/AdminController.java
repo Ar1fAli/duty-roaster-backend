@@ -7,6 +7,7 @@ import com.infotech.service.AdminService;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/auth")
 @RestController
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://192.168.29.45:3000")
+@CrossOrigin("*")
 public class AdminController {
 
     private final AdminService adminService;
@@ -28,7 +29,7 @@ public class AdminController {
         return res;
     }
 
-    @GetMapping("/register")
+    @GetMapping("/profile")
     List<AdminEntity> getAdmin() {
         List<AdminEntity> admin = adminService.getAdmin();
         return admin;
@@ -39,4 +40,9 @@ public class AdminController {
         return adminService.login(adminEntity);
     }
 
+    @PostMapping("/update/{id}")
+    public AdminEntity updateCategory(@PathVariable Long id, @RequestBody AdminEntity admindat) {
+
+        return adminService.updateCategory(id, admindat);
+    }
 }

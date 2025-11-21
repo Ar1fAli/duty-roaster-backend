@@ -21,12 +21,12 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long vip_id;
-    private Long contact_no;
+    private Long contactno;
 
-    private String vip_name;
-    private String vip_email;
-    private String vip_designation;
+    private String name;
+    private String email;
+    private String designation;
+    private String status;
 
     //
     // @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval =

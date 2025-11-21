@@ -38,12 +38,13 @@ public class OfficerController {
     @PutMapping("/{id}")
     public Officer updateOfficer(@PathVariable Long id, @RequestBody Officer updatedOfficer) {
         return officerRepository.findById(id).map(officer -> {
-            officer.setGuard_id(updatedOfficer.getGuard_id());
-            officer.setGuard_name(updatedOfficer.getGuard_name());
-            officer.setGuard_email(updatedOfficer.getGuard_email());
-            officer.setGuard_rank(updatedOfficer.getGuard_rank());
-            officer.setGuard_experience(updatedOfficer.getGuard_experience());
-            officer.setContact_no(updatedOfficer.getContact_no());
+            // officer.setGuard_id(updatedOfficer.getGuard_id());
+            officer.setName(updatedOfficer.getName());
+            officer.setEmail(updatedOfficer.getEmail());
+            officer.setRank(updatedOfficer.getRank());
+            officer.setStatus(updatedOfficer.getStatus());
+            officer.setExperience(updatedOfficer.getExperience());
+            officer.setContactno(updatedOfficer.getContactno());
 
             // Clear existing items (important for orphanRemoval = true)
             // officer.getOfficerName().clear();

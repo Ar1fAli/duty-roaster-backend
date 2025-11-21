@@ -61,4 +61,20 @@ public class AdminServiceImp implements AdminService {
         }
     }
 
+    public AdminEntity updateCategory(Long id, AdminEntity admindat) {
+
+        return adminRepsitory.findById(id).map(admin -> {
+            admin.setAdminId(admindat.getId());
+            admin.setAdminName(admindat.getAdminName());
+            admin.setAdminUsername(admindat.getAdminUsername());
+            admin.setAdminEmail(admindat.getAdminEmail());
+            admin.setAdminPassword(encoder.encode(admindat.getAdminPassword()));
+            admin.setContactNo(admindat.getContactNo());
+            admin.setAdminStatus(admindat.getAdminStatus());
+
+            return adminRepsitory.save(admin);
+        }).orElseThrow(() -> new RuntimeException("Category not found with id " +
+                id));
+    }
+
 }

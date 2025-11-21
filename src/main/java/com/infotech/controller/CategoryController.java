@@ -37,11 +37,12 @@ public class CategoryController {
     @PutMapping("/{id}")
     public Category updateCategory(@PathVariable Long id, @RequestBody Category updatedCategory) {
         return categoryRepository.findById(id).map(category -> {
-            category.setVip_id(updatedCategory.getVip_id());
-            category.setVip_name(updatedCategory.getVip_name());
-            category.setVip_email(updatedCategory.getVip_email());
-            category.setVip_designation(updatedCategory.getVip_designation());
-            category.setContact_no(updatedCategory.getContact_no());
+            category.setId(updatedCategory.getId());
+            category.setName(updatedCategory.getName());
+            category.setEmail(updatedCategory.getEmail());
+            category.setStatus(updatedCategory.getStatus());
+            category.setDesignation(updatedCategory.getDesignation());
+            category.setContactno(updatedCategory.getContactno());
 
             // Clear existing items (important for orphanRemoval = true)
             // category.getDataItems().clear();

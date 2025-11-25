@@ -1,4 +1,6 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/UserCategoryApiApplication.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/config/DataSeeder.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/config/OfficerDataSeeder.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/config/SecurityConfig.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/AdminController.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/AssignmentController.java

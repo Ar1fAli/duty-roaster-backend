@@ -17,6 +17,7 @@ com/infotech/repository/CategoryRepository.class
 com/infotech/repository/UserRepository.class
 com/infotech/service/JwtFilter.class
 com/infotech/dto/AssignmentResponse.class
+com/infotech/config/DataSeeder.class
 com/infotech/dto/GuardLevelRequest.class
 com/infotech/repository/OfficerRepository.class
 com/infotech/entity/UserGuardAssignment.class
@@ -28,3 +29,4 @@ com/infotech/entity/UserEntity.class
 com/infotech/service/CustomUserDetailsService.class
 com/infotech/dto/Logindat.class
 com/infotech/dto/LoginResponse.class
+com/infotech/config/OfficerDataSeeder.class

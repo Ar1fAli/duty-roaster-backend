@@ -1,6 +1,7 @@
 package com.infotech.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.infotech.entity.Officer;
 import com.infotech.repository.OfficerRepository;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,12 @@ public class OfficerController {
         return officerRepository.save(officer);
     }
 
+    @GetMapping("/profile")
+    public Optional<Officer> getAdmin(@RequestParam String userName) {
+        Optional<Officer> admindata = officerRepository.findByUsername(userName);
+        return admindata;
+    }
+
     @PutMapping("/{id}")
     public Officer updateOfficer(@PathVariable Long id, @RequestBody Officer updatedOfficer) {
         return officerRepository.findById(id).map(officer -> {
@@ -50,6 +58,9 @@ public class OfficerController {
             officer.setStatus(updatedOfficer.getStatus());
             officer.setExperience(updatedOfficer.getExperience());
             officer.setContactno(updatedOfficer.getContactno());
+            officer.setPassword(encoder.encode(updatedOfficer.getPassword()));
+
+            officer.setUsername(updatedOfficer.getUsername());
 
             // Clear existing items (important for orphanRemoval = true)
             // officer.getOfficerName().clear();

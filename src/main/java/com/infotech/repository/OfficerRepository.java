@@ -13,4 +13,6 @@ public interface OfficerRepository extends JpaRepository<Officer, Long> {
 
     Optional<Officer> findByUsername(String username);
 
+    boolean existsByUsername(String username);
+
 }

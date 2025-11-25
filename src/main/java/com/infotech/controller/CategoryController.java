@@ -48,6 +48,8 @@ public class CategoryController {
             category.setStatus(updatedCategory.getStatus());
             category.setDesignation(updatedCategory.getDesignation());
             category.setContactno(updatedCategory.getContactno());
+            category.setUsername(updatedCategory.getUsername());
+            category.setPassword(encoder.encode(updatedCategory.getPassword()));
 
             // Clear existing items (important for orphanRemoval = true)
             // category.getDataItems().clear();

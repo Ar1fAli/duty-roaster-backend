@@ -443,4 +443,14 @@ public class AssignmentService {
         System.out.println("Returning AssignmentResponse: " + resp);
         return resp;
     }
+
+    @Transactional(readOnly = true)
+    public Category getVipForGuard(Long officerId) {
+        UserGuardAssignment assignment = assignmentRepository
+                .findFirstByOfficerIdAndStatusOrderByAssignedAtDesc(officerId, "Active")
+                .orElseThrow(() -> new RuntimeException(
+                        "No active VIP assignment found for guard id: " + officerId));
+
+        return assignment.getCategory(); // this is the VIP
+    }
 }

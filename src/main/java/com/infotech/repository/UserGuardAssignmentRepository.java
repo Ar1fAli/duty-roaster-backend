@@ -1,6 +1,7 @@
 package com.infotech.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.infotech.entity.Category;
 import com.infotech.entity.UserGuardAssignment;
@@ -28,4 +29,8 @@ public interface UserGuardAssignmentRepository extends JpaRepository<UserGuardAs
     List<UserGuardAssignment> findByCategoryAndGuardLevel(
             @Param("category") Category category,
             @Param("level") String level);
+
+    Optional<UserGuardAssignment> findFirstByOfficerIdAndStatusOrderByAssignedAtDesc(
+            Long officerId,
+            String status);
 }

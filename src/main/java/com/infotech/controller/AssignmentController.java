@@ -2,6 +2,7 @@ package com.infotech.controller;
 
 import com.infotech.dto.AssignmentResponse;
 import com.infotech.dto.GuardAssignmentRequest;
+import com.infotech.entity.Category;
 import com.infotech.service.AssignmentService;
 
 import org.springframework.http.ResponseEntity;
@@ -41,5 +42,10 @@ public class AssignmentController {
     public ResponseEntity<AssignmentResponse> getAssignmentsForCategory(@PathVariable Long categoryId) {
         AssignmentResponse response = assignmentService.getAssignmentResponseForCategory(categoryId);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/getvip/{guardId}")
+    public Category getVipForGuard(@PathVariable Long guardId) {
+        return assignmentService.getVipForGuard(guardId);
     }
 }

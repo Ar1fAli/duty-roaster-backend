@@ -1,16 +1,19 @@
 package com.infotech.controller;
 
-import java.util.List;
-
+import com.infotech.dto.LoginResponse;
+import com.infotech.dto.Logindat;
 import com.infotech.entity.AdminEntity;
 import com.infotech.service.AdminService;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
@@ -29,14 +32,22 @@ public class AdminController {
         return res;
     }
 
+    // @GetMapping("/profile")
+    // Optional<AdminEntity> getAdmin(@RequestBody String userName) {
+    // Optional<AdminEntity> admin = adminService.getAdmin(userName);
+    // return admin;
+    // }@RequestParam String userName
+
     @GetMapping("/profile")
-    List<AdminEntity> getAdmin() {
-        List<AdminEntity> admin = adminService.getAdmin();
-        return admin;
+    public ResponseEntity<AdminEntity> getAdmin(@RequestParam String userName) {
+        // String userName = authentication.getName(); // or from principal
+        AdminEntity admin = adminService.getAdmin(userName)
+                .orElseThrow(() -> new UsernameNotFoundException("Admin not found"));
+        return ResponseEntity.ok(admin);
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody AdminEntity adminEntity) {
+    public LoginResponse login(@RequestBody Logindat adminEntity) {
         return adminService.login(adminEntity);
     }
 

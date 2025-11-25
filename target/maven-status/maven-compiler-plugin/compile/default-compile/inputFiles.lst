@@ -8,6 +8,8 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/AssignmentSummary.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/GuardAssignmentRequest.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/GuardLevelRequest.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/LoginResponse.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/Logindat.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/AdminEntity.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/Category.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/DataItem.java

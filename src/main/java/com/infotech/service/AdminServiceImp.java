@@ -1,14 +1,17 @@
 package com.infotech.service;
 
-import java.util.List;
+import java.util.Optional;
 
 import jakarta.transaction.Transactional;
 
+import com.infotech.dto.LoginResponse;
+import com.infotech.dto.Logindat;
 import com.infotech.entity.AdminEntity;
 import com.infotech.repository.AdminRepsitory;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -36,24 +39,41 @@ public class AdminServiceImp implements AdminService {
     }
 
     @Override
-    public List<AdminEntity> getAdmin() {
-        List<AdminEntity> admindata = adminRepsitory.findAll();
+    public Optional<AdminEntity> getAdmin(String userName) {
+        Optional<AdminEntity> admindata = adminRepsitory.findByAdminUsername(userName);
         return admindata;
     }
 
     @Override
-    public String login(AdminEntity adminEntity) {
+    public LoginResponse login(Logindat loginDto) {
         try {
-            System.out.println(adminEntity.getAdminUsername());
-            System.out.println(adminEntity.getAdminPassword());
+            System.out.println(loginDto.getUsername());
+            System.out.println(loginDto.getPassword());
 
-            authManager.authenticate(
+            // This will call CustomUserDetailsService.loadUserByUsername()
+            Authentication authentication = authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            adminEntity.getAdminUsername(),
-                            adminEntity.getAdminPassword()));
+                            loginDto.getUsername(),
+                            loginDto.getPassword()));
 
             System.out.println("working");
-            return jwtService.generateToken(adminEntity.getAdminUsername());
+
+            // Extract role from granted authorities
+            String fullRole = authentication.getAuthorities()
+                    .stream()
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("No role found"))
+                    .getAuthority(); // e.g. "ROLE_ADMIN"
+
+            // Optional: strip "ROLE_"
+            String role = fullRole.replace("ROLE_", ""); // ADMIN / GUARD / VIP
+
+            LoginResponse res = new LoginResponse();
+            // If your JWT should also contain role, adjust generateToken accordingly
+            res.setData(jwtService.generateToken(loginDto.getUsername()));
+            res.setRole(role);
+
+            return res;
 
         } catch (Exception e) {
             System.out.println("Login failed: " + e.getMessage());
@@ -61,16 +81,42 @@ public class AdminServiceImp implements AdminService {
         }
     }
 
+    // @Override
+    // public LoginResponse login(Logindat adminEntity) {
+    // try {
+    // System.out.println(adminEntity.getUsername());
+    // System.out.println(adminEntity.getPassword());
+    //
+    // authManager.authenticate(
+    // new UsernamePasswordAuthenticationToken(
+    // adminEntity.getUsername(),
+    // adminEntity.getPassword()));
+    //
+    // System.out.println("working");
+    // AdminEntity admin =
+    // adminRepsitory.findByAdminUsername(adminEntity.getUsername())
+    // .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    // LoginResponse res = new LoginResponse();
+    // res.setData(jwtService.generateToken(adminEntity.getUsername()));
+    // res.setRole(admin.getRole());
+    // return res;
+    //
+    // } catch (Exception e) {
+    // System.out.println("Login failed: " + e.getMessage());
+    // throw new RuntimeException("Invalid username or password");
+    // }
+    // }
+
     public AdminEntity updateCategory(Long id, AdminEntity admindat) {
 
         return adminRepsitory.findById(id).map(admin -> {
-            admin.setAdminId(admindat.getId());
+            admin.setId(admindat.getId());
             admin.setAdminName(admindat.getAdminName());
             admin.setAdminUsername(admindat.getAdminUsername());
             admin.setAdminEmail(admindat.getAdminEmail());
             admin.setAdminPassword(encoder.encode(admindat.getAdminPassword()));
             admin.setContactNo(admindat.getContactNo());
-            admin.setAdminStatus(admindat.getAdminStatus());
+            admin.setRole(admindat.getRole());
 
             return adminRepsitory.save(admin);
         }).orElseThrow(() -> new RuntimeException("Category not found with id " +

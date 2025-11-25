@@ -26,3 +26,5 @@ com/infotech/dto/GuardAssignmentRequest.class
 com/infotech/entity/Officer.class
 com/infotech/entity/UserEntity.class
 com/infotech/service/CustomUserDetailsService.class
+com/infotech/dto/Logindat.class
+com/infotech/dto/LoginResponse.class

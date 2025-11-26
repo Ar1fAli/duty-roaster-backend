@@ -19,6 +19,7 @@ import com.infotech.dto.AssignmentResponse;
 import com.infotech.dto.AssignmentSummary;
 import com.infotech.dto.GuardAssignmentRequest;
 import com.infotech.dto.GuardLevelRequest;
+import com.infotech.dto.OfficerDuty;
 import com.infotech.entity.Category;
 import com.infotech.entity.Officer;
 import com.infotech.entity.UserGuardAssignment;
@@ -445,12 +446,19 @@ public class AssignmentService {
     }
 
     @Transactional(readOnly = true)
-    public Category getVipForGuard(Long officerId) {
+    public OfficerDuty getVipForGuard(Long officerId) {
+        OfficerDuty offic = new OfficerDuty();
         UserGuardAssignment assignment = assignmentRepository
                 .findFirstByOfficerIdAndStatusOrderByAssignedAtDesc(officerId, "Active")
                 .orElseThrow(() -> new RuntimeException(
                         "No active VIP assignment found for guard id: " + officerId));
+        Category categ = assignment.getCategory();
 
-        return assignment.getCategory(); // this is the VIP
+        offic.setName(categ.getName());
+        offic.setDesignation(categ.getDesignation());
+        offic.setStartAt(assignment.getStartAt());
+        offic.setEndAt(assignment.getEndAt());
+
+        return offic; // this is the VIP
     }
 }

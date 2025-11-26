@@ -48,6 +48,7 @@ package com.infotech.service;
 import com.infotech.repository.AdminRepsitory;
 import com.infotech.repository.CategoryRepository;
 import com.infotech.repository.OfficerRepository;
+import com.infotech.repository.UserRepository;
 
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -64,6 +65,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final AdminRepsitory adminRepsitory;
     private final OfficerRepository officerRepository;
     private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -103,6 +105,17 @@ public class CustomUserDetailsService implements UserDetailsService {
                     cat.getUsername(),
                     cat.getPassword(),
                     "VIP" // or cat.getRole()
+            );
+        }
+
+        // 3. Try VIP / category table
+        var userrep = userRepository.findByUsername(username);
+        if (userrep.isPresent()) {
+            var usr = userrep.get();
+            return buildUser(
+                    usr.getUsername(),
+                    usr.getPassword(),
+                    "USER" // or cat.getRole()
             );
         }
 

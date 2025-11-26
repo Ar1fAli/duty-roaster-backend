@@ -7,6 +7,5 @@ public class LoginResponse {
 
     private String data;
     private String role;
-    private Long id;
 
 }

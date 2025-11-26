@@ -43,8 +43,8 @@ public class OfficerController {
     }
 
     @GetMapping("/profile")
-    public Optional<Officer> getAdmin(@RequestParam String userName) {
-        Optional<Officer> admindata = officerRepository.findByUsername(userName);
+    public Optional<Officer> getAdmin(@RequestParam String username) {
+        Optional<Officer> admindata = officerRepository.findByUsername(username);
         return admindata;
     }
 

@@ -18,6 +18,10 @@ public class UserEntity {
     private Long id;
 
     private String username;
+    private String name;
+    private String email;
     private String password;
-    private String role;
+    private String contactno;
+    private String status;
+
 }

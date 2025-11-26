@@ -6,6 +6,7 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/AssignmentController.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/CategoryController.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/OfficerController.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/UserController.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/AssignmentResponse.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/AssignmentSummary.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/GuardAssignmentRequest.java
@@ -30,3 +31,4 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/CustomUserDetailsService.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/JwtFilter.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/JwtService.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/UserService.java

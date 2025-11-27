@@ -25,6 +25,7 @@ com/infotech/controller/UserController.class
 com/infotech/entity/OfficerName.class
 com/infotech/dto/GuardAssignmentRequest.class
 com/infotech/entity/Officer.class
+com/infotech/dto/OfficerDuty.class
 com/infotech/entity/UserEntity.class
 com/infotech/service/CustomUserDetailsService.class
 com/infotech/dto/Logindat.class

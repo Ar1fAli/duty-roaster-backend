@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # === CONFIGURATION ===
-BASE_URL="https://duty-roaster-backend.onrender.com"
+BASE_URL="http://192.168.29.46:8081"
 LOGIN_URL="$BASE_URL/auth/login"
 OFFICER_URL="$BASE_URL/api/officer"
 CREDENTIALS_FILE="officer_credentials.csv"
 
 # Admin credentials for login
-ADMIN_USERNAME="himanshu"
-ADMIN_PASSWORD="admin"
+ADMIN_USERNAME="admin1"
+ADMIN_PASSWORD="admin1"
 
 # Name arrays (50 first + 50 last = 2500 unique combinations)
 first_names=(

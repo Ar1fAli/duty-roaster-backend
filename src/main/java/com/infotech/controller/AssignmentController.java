@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
@@ -48,4 +49,31 @@ public class AssignmentController {
     public OfficerDuty getVipForGuard(@PathVariable Long guardId) {
         return assignmentService.getVipForGuard(guardId);
     }
+
+    @PostMapping("/{assignmentId}/leave")
+    public AssignmentResponse markGuardOnLeave(
+            @PathVariable Long assignmentId,
+            @RequestBody GuardAssignmentRequest requirement) {
+
+        return assignmentService.markGuardOnLeaveAndRefillit(assignmentId, requirement);
+    }
+
+    @PostMapping("/refill")
+    public ResponseEntity<AssignmentResponse> refillMissingGuards(
+            @RequestParam("vipId") Long vipId,
+            @RequestParam("level") String level,
+            @RequestParam("missing") int missing) {
+
+        AssignmentResponse response = assignmentService.markGuardOnLeaveAndRefill(vipId, level, missing);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{vipId}/refill")
+    public AssignmentResponse refillGuards(
+            @PathVariable Long vipId,
+            @RequestBody GuardAssignmentRequest request) {
+
+        return assignmentService.refillMissingGuards(vipId, request);
+    }
+
 }

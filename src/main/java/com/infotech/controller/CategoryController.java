@@ -53,6 +53,8 @@ public class CategoryController {
             category.setUsername(updatedCategory.getUsername());
             category.setPassword(encoder.encode(updatedCategory.getPassword()));
 
+            System.out.println("updated category p" + updatedCategory.getPassword());
+
             // Clear existing items (important for orphanRemoval = true)
             // category.getDataItems().clear();
 

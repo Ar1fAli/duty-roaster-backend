@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.infotech.entity.Officer;
+import com.infotech.repository.LeaveRequestRepository;
 import com.infotech.repository.OfficerRepository;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class OfficerController {
 
     private final OfficerRepository officerRepository;
+    private final LeaveRequestRepository leaveRequestRepository;
     private final PasswordEncoder encoder;
 
     @GetMapping
@@ -43,7 +45,7 @@ public class OfficerController {
     }
 
     @GetMapping("/profile")
-    public Optional<Officer> getAdmin(@RequestParam String username) {
+    public Optional<Officer> getOfficer(@RequestParam String username) {
         Optional<Officer> admindata = officerRepository.findByUsername(username);
         return admindata;
     }
@@ -56,9 +58,14 @@ public class OfficerController {
             officer.setEmail(updatedOfficer.getEmail());
             officer.setRank(updatedOfficer.getRank());
             officer.setStatus(updatedOfficer.getStatus());
+            // officer.setReqstatus(updatedOfficer.getReqstatus());
+            // officer.setReasonmes(updatedOfficer.getReasonmes());
             officer.setExperience(updatedOfficer.getExperience());
             officer.setContactno(updatedOfficer.getContactno());
+            System.out.println("updated password " + updatedOfficer.getPassword());
             officer.setPassword(encoder.encode(updatedOfficer.getPassword()));
+
+            System.out.println("updated password " + updatedOfficer.getPassword());
 
             officer.setUsername(updatedOfficer.getUsername());
 

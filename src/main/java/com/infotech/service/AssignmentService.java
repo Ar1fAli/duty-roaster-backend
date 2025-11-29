@@ -36,429 +36,508 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AssignmentService {
 
-    private final CategoryRepository categoryRepository;
-    private final OfficerRepository officerRepository;
-    private final UserGuardAssignmentRepository assignmentRepository;
+        private final CategoryRepository categoryRepository;
+        private final OfficerRepository officerRepository;
+        private final UserGuardAssignmentRepository assignmentRepository;
 
-    @PersistenceContext
-    private EntityManager em;
+        @PersistenceContext
+        private EntityManager em;
 
-    private static final int MAX_REUSE = 4;
+        private static final int MAX_REUSE = 4;
 
-    /**
-     * Idempotent assignment: if active assignments already satisfy the requested
-     * number for a level,
-     * no new assignments are created for that level. Only missing slots are filled.
-     */
-    // @Transactional
-    // public AssignmentResponse assignGuardsAutomatically(GuardAssignmentRequest
-    // request) {
-    //
-    // System.out.println(request.getUserId());
-    // System.out.println(request.getLevels());
-    // System.out.println(request.getAtEnd());
-    // System.out.println(request.getStartAt());
-    // System.out.println(request.getEndAt());
-    //
-    // Category category = categoryRepository.findById(request.getUserId())
-    // .orElseThrow(() -> new RuntimeException("Category (user) not found"));
-    //
-    // List<UserGuardAssignment> responseDetails = new ArrayList<>();
-    // List<AssignmentSummary> summaries = new ArrayList<>();
-    //
-    // for (GuardLevelRequest levelReq : request.getLevels()) {
-    //
-    // String level = levelReq.getGuardLevel();
-    // int requestedCount = levelReq.getNumberOfGuards();
-    //
-    // // 1) Current active assignments for this category+level
-    // List<UserGuardAssignment> activeForLevel = assignmentRepository
-    // .findByCategoryAndGuardLevelAndStatus(category, level, "Active");
-    //
-    // int activeCount = activeForLevel.size();
-    //
-    // // If already satisfied — add summary & include existing assignments
-    // if (activeCount >= requestedCount) {
-    // summaries.add(new AssignmentSummary(level, requestedCount, activeCount, 0));
-    // responseDetails.addAll(activeForLevel);
-    // continue;
-    // }
-    //
-    // // Missing slots to assign
-    // int missing = requestedCount - activeCount;
-    //
-    // // 2) All previous assignments (any status) for reuse logic
-    // List<UserGuardAssignment> previous =
-    // assignmentRepository.findByCategoryAndGuardLevel(category, level);
-    //
-    // // 3) Active guard ids (to exclude)
-    // Set<Long> activeGuardIds = previous.stream()
-    // .filter(a -> "Active".equalsIgnoreCase(a.getStatus()))
-    // .map(a -> a.getOfficer().getId())
-    // .collect(Collectors.toSet());
-    //
-    // // 4) Inactive previous assignments (potentially reusable)
-    // List<UserGuardAssignment> inactivePrevious = previous.stream()
-    // .filter(a -> !"Active".equalsIgnoreCase(a.getStatus()))
-    // .collect(Collectors.toList());
-    //
-    // // 5) Officers of required level currently Inactive
-    // List<Officer> allGuardsOfLevel = officerRepository.findByRank(level).stream()
-    // .filter(o -> "Inactive".equalsIgnoreCase(o.getStatus()))
-    // .collect(Collectors.toList());
-    //
-    // // 6) Exclude those already active in other assignments for this category
-    // List<Officer> availableGuards = allGuardsOfLevel.stream()
-    // .filter(o -> !activeGuardIds.contains(o.getId()))
-    // .collect(Collectors.toList());
-    //
-    // // 7) Build timesAssigned map and exclude those reaching MAX_REUSE
-    // Map<Long, Integer> timesMap = inactivePrevious.stream()
-    // .collect(Collectors.toMap(
-    // a -> a.getOfficer().getId(),
-    // UserGuardAssignment::getTimesAssigned,
-    // (oldV, newV) -> Math.max(oldV, newV) // merge duplicates
-    // ));
-    //
-    // Set<Long> excludedIds = timesMap.entrySet().stream()
-    // .filter(e -> e.getValue() >= MAX_REUSE)
-    // .map(Map.Entry::getKey)
-    // .collect(Collectors.toSet());
-    //
-    // List<Officer> cleanedAvailable = availableGuards.stream()
-    // .filter(o -> !excludedIds.contains(o.getId()))
-    // .collect(Collectors.toList());
-    //
-    // // 8) Reusable officers from previous assignments
-    // List<Officer> reusable = inactivePrevious.stream()
-    // .filter(a -> a.getTimesAssigned() < MAX_REUSE)
-    // .map(UserGuardAssignment::getOfficer)
-    // .filter(o -> !excludedIds.contains(o.getId()))
-    // .collect(Collectors.toList());
-    //
-    // // 9) Combine unique (available + reusable)
-    // Map<Long, Officer> combinedMap = new LinkedHashMap<>();
-    // cleanedAvailable.forEach(o -> combinedMap.put(o.getId(), o));
-    // reusable.forEach(o -> combinedMap.putIfAbsent(o.getId(), o));
-    // List<Officer> combinedPool = new ArrayList<>(combinedMap.values());
-    //
-    // // 10) Select randomly up to missing
-    // Collections.shuffle(combinedPool);
-    // int willAssign = Math.min(missing, combinedPool.size());
-    // List<Officer> selected = combinedPool.subList(0, willAssign);
-    //
-    // // 11) Create/update assignments for selected officers
-    // List<UserGuardAssignment> createdOrUpdated = new ArrayList<>();
-    // for (Officer officer : selected) {
-    // // mark officer active immediately (reduces race but not perfect)
-    // officer.setStatus("Active");
-    // officerRepository.save(officer);
-    //
-    // Optional<UserGuardAssignment> existing = inactivePrevious.stream()
-    // .filter(a -> a.getOfficer().getId().equals(officer.getId()))
-    // .findFirst();
-    //
-    // UserGuardAssignment assignment;
-    // if (existing.isPresent()) {
-    // assignment = existing.get();
-    // assignment.setTimesAssigned(Optional.ofNullable(assignment.getTimesAssigned()).orElse(0)
-    // + 1);
-    // } else {
-    // assignment = new UserGuardAssignment();
-    // assignment.setCategory(category);
-    // assignment.setOfficer(officer);
-    // assignment.setTimesAssigned(1);
-    // }
-    // assignment.setStatus("Active");
-    // assignment.setAssignedAt(LocalDateTime.now());
-    // assignment.setStartAt(request.getStartAt());
-    // assignment.setEndAt(request.getEndAt());
-    // createdOrUpdated.add(assignment);
-    // System.out.println(assignment.getAtEnd()+"atend");
-    // System.out.println(assignment.getStartAt() + "startat ");
-    // System.out.println(assignment.getEndAt() + "endat");
-    //
-    // }
-    // Optional<Category> maybe = categoryRepository.findById(request.getUserId());
-    // if (maybe.isPresent()) {
-    // Category officer = maybe.get();
-    // officer.setStatus("Active"); // or "Removed" depending on your domain
-    // categoryRepository.save(officer);
-    // }
-    //
-    // // 12) Persist new/updated assignments and collect results
-    // if (!createdOrUpdated.isEmpty()) {
-    // List<UserGuardAssignment> saved =
-    // assignmentRepository.saveAll(createdOrUpdated);
-    // responseDetails.addAll(saved);
-    // }
-    //
-    // // include previously active so response contains all current active
-    // assignments
-    // // for this level
-    // responseDetails.addAll(activeForLevel);
-    //
-    // int totalAssignedNow = activeCount + willAssign;
-    // int nowMissing = Math.max(0, requestedCount - totalAssignedNow);
-    // summaries.add(new AssignmentSummary(level, requestedCount, totalAssignedNow,
-    // nowMissing));
-    // }
-    //
-    // AssignmentResponse resp = new AssignmentResponse();
-    // resp.setSummary(summaries);
-    // resp.setDetails(responseDetails);
-    // return resp;
-    // }
+        // -----------------------------------------------
+        // assignGuardsAutomatically (unchanged)
+        // -----------------------------------------------
+        @Transactional
+        public AssignmentResponse assignGuardsAutomatically(GuardAssignmentRequest request) {
 
-    /**
-     * Read endpoint: returns current active assignments grouped by level and the
-     * list of active details.
-     */
+                Category category = categoryRepository.findById(request.getUserId())
+                                .orElseThrow(() -> new RuntimeException("Category (user) not found"));
 
-    @Transactional
-    public AssignmentResponse assignGuardsAutomatically(GuardAssignmentRequest request) {
-        Category category = categoryRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("Category (user) not found"));
+                List<UserGuardAssignment> responseDetails = new ArrayList<>();
+                List<AssignmentSummary> summaries = new ArrayList<>();
 
-        List<UserGuardAssignment> responseDetails = new ArrayList<>();
-        List<AssignmentSummary> summaries = new ArrayList<>();
+                Map<String, List<Officer>> selectionsByLevel = new LinkedHashMap<>();
+                Map<String, Integer> requestedByLevel = new HashMap<>();
 
-        // Map level -> selected officers to assign (dry run results)
-        Map<String, List<Officer>> selectionsByLevel = new LinkedHashMap<>();
-        Map<String, Integer> requestedByLevel = new HashMap<>();
+                for (GuardLevelRequest levelReq : request.getLevels()) {
+                        String level = levelReq.getGuardLevel();
+                        int requestedCount = levelReq.getNumberOfGuards();
+                        requestedByLevel.put(level, requestedCount);
 
-        // ----- DRY RUN: determine candidates for each level without saving -----
-        for (GuardLevelRequest levelReq : request.getLevels()) {
-            String level = levelReq.getGuardLevel();
-            int requestedCount = levelReq.getNumberOfGuards();
-            requestedByLevel.put(level, requestedCount);
+                        List<UserGuardAssignment> activeForLevel = assignmentRepository
+                                        .findByCategoryAndGuardLevelAndStatus(category, level, "Active");
 
-            // 1) Current active assignments for this category+level
-            List<UserGuardAssignment> activeForLevel = assignmentRepository
-                    .findByCategoryAndGuardLevelAndStatus(category, level, "Active");
-            int activeCount = activeForLevel.size();
+                        int activeCount = activeForLevel.size();
 
-            if (activeCount >= requestedCount) {
-                // nothing to assign for this level
-                summaries.add(new AssignmentSummary(level, requestedCount, activeCount, 0));
-                selectionsByLevel.put(level, Collections.emptyList());
-                continue;
-            }
+                        if (activeCount >= requestedCount) {
+                                summaries.add(new AssignmentSummary(level, requestedCount, activeCount,
+                                                0));
+                                selectionsByLevel.put(level, Collections.emptyList());
+                                continue;
+                        }
 
-            int missing = requestedCount - activeCount;
+                        int missing = requestedCount - activeCount;
 
-            // 2) All previous assignments (any status) for reuse logic
-            List<UserGuardAssignment> previous = assignmentRepository.findByCategoryAndGuardLevel(category, level);
+                        List<UserGuardAssignment> previous = assignmentRepository
+                                        .findByCategoryAndGuardLevel(category, level);
 
-            // 3) Active guard ids (to exclude)
-            Set<Long> activeGuardIds = previous.stream()
-                    .filter(a -> "Active".equalsIgnoreCase(a.getStatus()))
-                    .map(a -> a.getOfficer().getId())
-                    .collect(Collectors.toSet());
+                        Set<Long> activeGuardIds = previous.stream()
+                                        .filter(a -> "Active".equalsIgnoreCase(a.getStatus()))
+                                        .map(a -> a.getOfficer().getId())
+                                        .collect(Collectors.toSet());
 
-            // 4) Inactive previous assignments (potentially reusable)
-            List<UserGuardAssignment> inactivePrevious = previous.stream()
-                    .filter(a -> !"Active".equalsIgnoreCase(a.getStatus()))
-                    .collect(Collectors.toList());
+                        List<UserGuardAssignment> inactivePrevious = previous.stream()
+                                        .filter(a -> !"Active".equalsIgnoreCase(a.getStatus()))
+                                        .collect(Collectors.toList());
 
-            // 5) Officers of required level currently Inactive
-            List<Officer> allGuardsOfLevel = officerRepository.findByRank(level).stream()
-                    .filter(o -> "Inactive".equalsIgnoreCase(o.getStatus()))
-                    .collect(Collectors.toList());
+                        List<Officer> allInactiveThisLevel = officerRepository.findByRank(
+                                        level)
+                                        .stream()
+                                        .filter(o -> "Inactive".equalsIgnoreCase(o.getStatus()))
+                                        .collect(Collectors.toList());
 
-            // 6) Exclude those already active in other assignments for this category
-            List<Officer> availableGuards = allGuardsOfLevel.stream()
-                    .filter(o -> !activeGuardIds.contains(o.getId()))
-                    .collect(Collectors.toList());
+                        List<Officer> availableGuards = allInactiveThisLevel.stream()
+                                        .filter(o -> !activeGuardIds.contains(o.getId()))
+                                        .collect(Collectors.toList());
 
-            // 7) Build timesAssigned map and exclude those reaching MAX_REUSE
-            Map<Long, Integer> timesMap = inactivePrevious.stream()
-                    .collect(Collectors.toMap(
-                            a -> a.getOfficer().getId(),
-                            UserGuardAssignment::getTimesAssigned,
-                            (oldV, newV) -> Math.max(oldV, newV)));
+                        Map<Long, Integer> timesMap = inactivePrevious.stream()
+                                        .collect(Collectors.toMap(
+                                                        a -> a.getOfficer().getId(),
+                                                        UserGuardAssignment::getTimesAssigned,
+                                                        Math::max));
 
-            Set<Long> excludedIds = timesMap.entrySet().stream()
-                    .filter(e -> e.getValue() >= MAX_REUSE)
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toSet());
+                        Set<Long> excluded = timesMap.entrySet()
+                                        .stream()
+                                        .filter(e -> e.getValue() >= MAX_REUSE)
+                                        .map(Map.Entry::getKey)
+                                        .collect(Collectors.toSet());
 
-            List<Officer> cleanedAvailable = availableGuards.stream()
-                    .filter(o -> !excludedIds.contains(o.getId()))
-                    .collect(Collectors.toList());
+                        List<Officer> cleaned = availableGuards.stream()
+                                        .filter(o -> !excluded.contains(o.getId()))
+                                        .collect(Collectors.toList());
 
-            // 8) Reusable officers from previous assignments
-            List<Officer> reusable = inactivePrevious.stream()
-                    .filter(a -> a.getTimesAssigned() < MAX_REUSE)
-                    .map(UserGuardAssignment::getOfficer)
-                    .filter(o -> !excludedIds.contains(o.getId()))
-                    .collect(Collectors.toList());
+                        List<Officer> reusable = inactivePrevious.stream()
+                                        .filter(a -> a.getTimesAssigned() < MAX_REUSE)
+                                        .map(UserGuardAssignment::getOfficer)
+                                        .filter(o -> !excluded.contains(o.getId()))
+                                        .collect(Collectors.toList());
 
-            // 9) Combine unique (available + reusable)
-            Map<Long, Officer> combinedMap = new LinkedHashMap<>();
-            cleanedAvailable.forEach(o -> combinedMap.put(o.getId(), o));
-            reusable.forEach(o -> combinedMap.putIfAbsent(o.getId(), o));
-            List<Officer> combinedPool = new ArrayList<>(combinedMap.values());
+                        Map<Long, Officer> combined = new LinkedHashMap<>();
+                        cleaned.forEach(o -> combined.put(o.getId(), o));
+                        reusable.forEach(o -> combined.putIfAbsent(o.getId(), o));
 
-            // 10) Select randomly up to missing (dry run)
-            Collections.shuffle(combinedPool);
-            int willAssign = Math.min(missing, combinedPool.size());
-            List<Officer> selected = combinedPool.subList(0, willAssign);
+                        List<Officer> combinedPool = new ArrayList<>(combined.values());
+                        Collections.shuffle(combinedPool);
 
-            // store dry-run selection and summary data
-            selectionsByLevel.put(level, new ArrayList<>(selected));
-            int totalAssignedNow = activeCount + willAssign;
-            int nowMissing = Math.max(0, requestedCount - totalAssignedNow);
-            summaries.add(new AssignmentSummary(level, requestedCount, totalAssignedNow, nowMissing));
+                        int willAssign = Math.min(missing, combinedPool.size());
+                        List<Officer> selected = combinedPool.subList(0, willAssign);
+
+                        selectionsByLevel.put(level, selected);
+
+                        int totalAssignedNow = activeCount + willAssign;
+                        summaries.add(new AssignmentSummary(level, requestedCount, totalAssignedNow,
+                                        Math.max(0, requestedCount - totalAssignedNow)));
+                }
+
+                List<String> failLevels = summaries.stream()
+                                .filter(s -> s.getMissing() > 0)
+                                .map(AssignmentSummary::getLevel)
+                                .collect(Collectors.toList());
+
+                if (!failLevels.isEmpty()) {
+                        throw new RuntimeException("Insufficient guards for: " + failLevels
+                                        + ". No assignment performed.");
+                }
+
+                for (Map.Entry<String, List<Officer>> entry : selectionsByLevel.entrySet()) {
+                        String level = entry.getKey();
+                        List<Officer> selected = entry.getValue();
+
+                        if (selected.isEmpty()) {
+                                List<UserGuardAssignment> activeOld = assignmentRepository
+                                                .findByCategoryAndGuardLevelAndStatus(category, level, "Active");
+                                responseDetails.addAll(activeOld);
+                                continue;
+                        }
+
+                        List<UserGuardAssignment> previous = assignmentRepository
+                                        .findByCategoryAndGuardLevel(category, level);
+
+                        List<UserGuardAssignment> inactivePrev = previous.stream()
+                                        .filter(a -> !"Active".equals(a.getStatus()))
+                                        .collect(Collectors.toList());
+
+                        List<UserGuardAssignment> created = new ArrayList<>();
+
+                        for (Officer officer : selected) {
+                                officer.setStatus("Active");
+                                officerRepository.save(officer);
+
+                                Optional<UserGuardAssignment> exist = inactivePrev.stream()
+                                                .filter(a -> a.getOfficer().getId().equals(officer.getId()))
+                                                .findFirst();
+
+                                UserGuardAssignment a;
+                                if (exist.isPresent()) {
+                                        a = exist.get();
+                                        a.setTimesAssigned(a.getTimesAssigned() + 1);
+                                } else {
+                                        a = new UserGuardAssignment();
+                                        a.setCategory(category);
+                                        a.setOfficer(officer);
+                                        a.setTimesAssigned(1);
+                                }
+
+                                a.setStatus("Active");
+                                a.setAssignedAt(LocalDateTime.now());
+                                a.setStartAt(request.getStartAt());
+                                a.setEndAt(request.getEndAt());
+
+                                created.add(a);
+                        }
+
+                        if (!created.isEmpty()) {
+                                responseDetails.addAll(assignmentRepository.saveAll(created));
+                        }
+
+                        responseDetails.addAll(assignmentRepository
+                                        .findByCategoryAndGuardLevelAndStatus(category, level, "Active"));
+                }
+
+                if (!responseDetails.isEmpty()) {
+                        category.setStatus("Active");
+                        categoryRepository.save(category);
+                }
+
+                AssignmentResponse resp = new AssignmentResponse();
+                resp.setSummary(summaries);
+                resp.setDetails(responseDetails);
+                return resp;
         }
 
-        // ----- VALIDATION: if any level still misses, abort (no assignment) -----
-        List<String> failingLevels = summaries.stream()
-                .filter(s -> s.getMissing() > 0)
-                .map(AssignmentSummary::getLevel)
-                .collect(Collectors.toList());
+        // -----------------------------------------------
+        // getAssignmentResponseForCategory (unchanged)
+        // -----------------------------------------------
+        @Transactional(readOnly = true)
+        public AssignmentResponse getAssignmentResponseForCategory(Long categoryId) {
 
-        if (!failingLevels.isEmpty()) {
-            // Throwing a runtime exception will roll back (because @Transactional).
-            // Provide a helpful message so caller knows which levels failed.
-            throw new RuntimeException("Insufficient guards for levels: " + String.join(", ", failingLevels) +
-                    ". No assignments were created.");
+                Category category = categoryRepository.findById(categoryId)
+                                .orElseThrow(() -> new RuntimeException("Category not found for id: "
+                                                + categoryId));
+
+                String jpql = "select a from UserGuardAssignment a left join fetch a.officer where a.category.id = :catId";
+                TypedQuery<UserGuardAssignment> q = em.createQuery(jpql, UserGuardAssignment.class);
+                q.setParameter("catId", category.getId());
+
+                List<UserGuardAssignment> all = q.getResultList();
+
+                Map<String, Long> byLevel = Optional.ofNullable(all)
+                                .orElse(Collections.emptyList())
+                                .stream()
+                                .filter(a -> "Active".equalsIgnoreCase(a.getStatus()))
+                                .collect(Collectors.groupingBy(
+                                                a -> a.getOfficer() != null ? a.getOfficer().getRank()
+                                                                : "UNASSIGNED",
+                                                Collectors.counting()));
+
+                List<AssignmentSummary> summaries = byLevel.entrySet().stream()
+                                .map(e -> new AssignmentSummary(e.getKey(), 0, e.getValue().intValue(),
+                                                0))
+                                .collect(Collectors.toList());
+
+                AssignmentResponse resp = new AssignmentResponse();
+                resp.setSummary(summaries);
+
+                List<UserGuardAssignment> details = all.stream()
+                                .filter(a -> "Active".equalsIgnoreCase(a.getStatus()))
+                                .collect(Collectors.toList());
+
+                resp.setDetails(details);
+
+                return resp;
         }
 
-        // ----- COMMIT PHASE: persist all assignments (safe: every level satisfied)
-        // -----
-        for (Map.Entry<String, List<Officer>> entry : selectionsByLevel.entrySet()) {
-            String level = entry.getKey();
-            List<Officer> selected = entry.getValue();
-            if (selected.isEmpty()) {
-                // nothing to create for this level (already satisfied)
-                // also add existing active assignments to response details
-                List<UserGuardAssignment> activeForLevel = assignmentRepository
-                        .findByCategoryAndGuardLevelAndStatus(category, level, "Active");
-                responseDetails.addAll(activeForLevel);
-                continue;
-            }
+        // -----------------------------------------------
+        // getVipForGuard (unchanged)
+        // -----------------------------------------------
+        @Transactional(readOnly = true)
+        public OfficerDuty getVipForGuard(Long officerId) {
+                OfficerDuty dto = new OfficerDuty();
 
-            // fetch previous inactive assignments once for this level
-            List<UserGuardAssignment> previous = assignmentRepository.findByCategoryAndGuardLevel(category, level);
-            List<UserGuardAssignment> inactivePrevious = previous.stream()
-                    .filter(a -> !"Active".equalsIgnoreCase(a.getStatus()))
-                    .collect(Collectors.toList());
+                UserGuardAssignment assignment = assignmentRepository
+                                .findFirstByOfficerIdAndStatusOrderByAssignedAtDesc(officerId, "Active")
+                                .orElseThrow(() -> new RuntimeException("No active VIP assignment for guard "
+                                                + officerId));
 
-            List<UserGuardAssignment> createdOrUpdated = new ArrayList<>();
-            for (Officer officer : selected) {
-                // mark officer active immediately
-                officer.setStatus("Active");
+                Category cat = assignment.getCategory();
+
+                dto.setName(cat.getName());
+                dto.setDesignation(cat.getDesignation());
+                dto.setStartAt(assignment.getStartAt());
+                dto.setEndAt(assignment.getEndAt());
+                dto.setId(assignment.getId());
+
+                return dto;
+        }
+
+        // ============================================================
+        // ✔ FIXED: markGuardOnLeaveAndRefill
+        // ============================================================
+        @Transactional
+        public AssignmentResponse markGuardOnLeaveAndRefillit(Long assignmentId,
+                        GuardAssignmentRequest requirement) {
+
+                UserGuardAssignment assignment = assignmentRepository.findById(assignmentId)
+                                .orElseThrow(() -> new RuntimeException("Assignment not found"));
+
+                // Only THIS assignment becomes Inactive
+                assignment.setStatus("Inactive");
+                assignmentRepository.save(assignment);
+
+                // Guard itself becomes inactive
+                Officer officer = assignment.getOfficer();
+                officer.setStatus("Inactive");
                 officerRepository.save(officer);
 
-                Optional<UserGuardAssignment> existing = inactivePrevious.stream()
-                        .filter(a -> a.getOfficer().getId().equals(officer.getId()))
-                        .findFirst();
+                Long vipId = assignment.getCategory().getId();
 
-                UserGuardAssignment assignment;
-                if (existing.isPresent()) {
-                    assignment = existing.get();
-                    assignment.setTimesAssigned(Optional.ofNullable(assignment.getTimesAssigned()).orElse(0) + 1);
-                } else {
-                    assignment = new UserGuardAssignment();
-                    assignment.setCategory(category);
-                    assignment.setOfficer(officer);
-                    assignment.setTimesAssigned(1);
+                return refillMissingGuards(vipId, requirement);
+        }
+
+        @Transactional
+        public AssignmentResponse markGuardOnLeaveAndRefill(Long vipId, String level, int missing) {
+
+                Category category = categoryRepository.findById(vipId)
+                                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+                List<UserGuardAssignment> responseDetails = new ArrayList<>();
+                List<AssignmentSummary> summaries = new ArrayList<>();
+
+                // Get currently active
+                List<UserGuardAssignment> active = assignmentRepository
+                                .findByCategoryAndGuardLevelAndStatus(category, level, "Active");
+
+                int activeCount = active.size();
+
+                // If nothing is actually missing, just return summary + current actives
+                if (missing <= 0) {
+                        summaries.add(new AssignmentSummary(
+                                        level,
+                                        activeCount + missing, // requested total
+                                        activeCount, // actually active
+                                        0 // shortfall
+                        ));
+                        responseDetails.addAll(active);
+                        return new AssignmentResponse(summaries, responseDetails);
                 }
-                assignment.setStatus("Active");
-                assignment.setAssignedAt(LocalDateTime.now());
-                assignment.setStartAt(request.getStartAt());
-                assignment.setEndAt(request.getEndAt());
-                createdOrUpdated.add(assignment);
-            }
 
-            if (!createdOrUpdated.isEmpty()) {
-                List<UserGuardAssignment> saved = assignmentRepository.saveAll(createdOrUpdated);
-                responseDetails.addAll(saved);
-            }
-            // include previously active so response contains all current active assignments
-            // for this level
-            List<UserGuardAssignment> activeForLevel = assignmentRepository
-                    .findByCategoryAndGuardLevelAndStatus(category, level, "Active");
-            responseDetails.addAll(activeForLevel);
+                // Previous assignments (any status)
+                List<UserGuardAssignment> previous = assignmentRepository
+                                .findByCategoryAndGuardLevel(category, level);
+
+                Set<Long> activeIds = previous.stream()
+                                .filter(a -> "Active".equals(a.getStatus()))
+                                .map(a -> a.getOfficer().getId())
+                                .collect(Collectors.toSet());
+
+                // Inactive officers of this rank
+                List<Officer> inactiveOfficers = officerRepository.findByRank(level)
+                                .stream()
+                                .filter(o -> "Inactive".equals(o.getStatus()))
+                                .collect(Collectors.toList());
+
+                // Available officers (not already active)
+                List<Officer> available = inactiveOfficers.stream()
+                                .filter(o -> !activeIds.contains(o.getId()))
+                                .collect(Collectors.toList());
+
+                // RANDOM selection
+                Collections.shuffle(available);
+                List<Officer> selected = available.subList(0, Math.min(missing, available.size()));
+
+                List<UserGuardAssignment> created = new ArrayList<>();
+                for (Officer officer : selected) {
+
+                        officer.setStatus("Active");
+                        officerRepository.save(officer);
+
+                        UserGuardAssignment newAssign = new UserGuardAssignment();
+                        newAssign.setCategory(category);
+                        newAssign.setOfficer(officer);
+                        newAssign.setStatus("Active");
+                        newAssign.setAssignedAt(LocalDateTime.now());
+
+                        // Reuse timing from old active assignment
+                        if (!active.isEmpty()) {
+                                newAssign.setStartAt(active.get(0).getStartAt());
+                                newAssign.setEndAt(active.get(0).getEndAt());
+                        }
+
+                        created.add(newAssign);
+                }
+
+                if (!created.isEmpty()) {
+                        responseDetails.addAll(assignmentRepository.saveAll(created));
+                }
+
+                // Get final list of active
+                List<UserGuardAssignment> nowActive = assignmentRepository
+                                .findByCategoryAndGuardLevelAndStatus(category, level, "Active");
+
+                summaries.add(new AssignmentSummary(
+                                level,
+                                activeCount + missing, // required total
+                                nowActive.size(), // actually active now
+                                Math.max(0, (activeCount + missing) - nowActive.size()) // still short
+                ));
+
+                responseDetails.addAll(nowActive);
+
+                AssignmentResponse resp = new AssignmentResponse();
+                resp.setSummary(summaries);
+                resp.setDetails(responseDetails);
+
+                return resp;
         }
 
-        // mark category active if any assignments were created
-        if (!responseDetails.isEmpty()) {
-            category.setStatus("Active");
-            categoryRepository.save(category);
+        // ============================================================
+        // ✔ FIXED: refillMissingGuards (raw entity list, no DTOs)
+        // ============================================================
+        @Transactional
+        public AssignmentResponse refillMissingGuards(Long vipId, GuardAssignmentRequest requirement) {
+
+                Category category = categoryRepository.findById(vipId)
+                                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+                List<UserGuardAssignment> responseDetails = new ArrayList<>();
+                List<AssignmentSummary> summaries = new ArrayList<>();
+
+                for (GuardLevelRequest levelReq : requirement.getLevels()) {
+
+                        String level = levelReq.getGuardLevel();
+                        int requestedCount = levelReq.getNumberOfGuards();
+
+                        List<UserGuardAssignment> active = assignmentRepository
+                                        .findByCategoryAndGuardLevelAndStatus(category, level, "Active");
+
+                        int activeCount = active.size();
+                        int missing = requestedCount - activeCount;
+
+                        if (missing <= 0) {
+                                summaries.add(new AssignmentSummary(level, requestedCount, activeCount,
+                                                0));
+                                responseDetails.addAll(active);
+                                continue;
+                        }
+
+                        List<UserGuardAssignment> previous = assignmentRepository
+                                        .findByCategoryAndGuardLevel(category, level);
+
+                        Set<Long> activeGuardIds = previous.stream()
+                                        .filter(a -> "Active".equals(a.getStatus()))
+                                        .map(a -> a.getOfficer().getId())
+                                        .collect(Collectors.toSet());
+
+                        List<UserGuardAssignment> inactivePrev = previous.stream()
+                                        .filter(a -> !"Active".equals(a.getStatus()))
+                                        .collect(Collectors.toList());
+
+                        List<Officer> inactiveOfficers = officerRepository.findByRank(level)
+                                        .stream()
+                                        .filter(o -> "Inactive".equals(o.getStatus()))
+                                        .collect(Collectors.toList());
+
+                        List<Officer> available = inactiveOfficers.stream()
+                                        .filter(o -> !activeGuardIds.contains(o.getId()))
+                                        .collect(Collectors.toList());
+
+                        Map<Long, Integer> timesMap = inactivePrev.stream()
+                                        .collect(Collectors.toMap(
+                                                        a -> a.getOfficer().getId(),
+                                                        UserGuardAssignment::getTimesAssigned,
+                                                        Math::max));
+
+                        Set<Long> excluded = timesMap.entrySet().stream()
+                                        .filter(e -> e.getValue() >= MAX_REUSE)
+                                        .map(Map.Entry::getKey)
+                                        .collect(Collectors.toSet());
+
+                        List<Officer> cleaned = available.stream()
+                                        .filter(o -> !excluded.contains(o.getId()))
+                                        .collect(Collectors.toList());
+
+                        List<Officer> reusable = inactivePrev.stream()
+                                        .filter(a -> a.getTimesAssigned() < MAX_REUSE)
+                                        .map(UserGuardAssignment::getOfficer)
+                                        .filter(o -> !excluded.contains(o.getId()))
+                                        .collect(Collectors.toList());
+
+                        Map<Long, Officer> combined = new LinkedHashMap<>();
+                        cleaned.forEach(o -> combined.put(o.getId(), o));
+                        reusable.forEach(o -> combined.putIfAbsent(o.getId(), o));
+
+                        List<Officer> pool = new ArrayList<>(combined.values());
+                        Collections.shuffle(pool);
+
+                        int willAssign = Math.min(missing, pool.size());
+                        List<Officer> selected = pool.subList(0, willAssign);
+
+                        List<UserGuardAssignment> created = new ArrayList<>();
+
+                        for (Officer officer : selected) {
+                                officer.setStatus("Active");
+                                officerRepository.save(officer);
+
+                                Optional<UserGuardAssignment> exist = inactivePrev.stream()
+                                                .filter(a -> a.getOfficer().getId().equals(officer.getId()))
+                                                .findFirst();
+
+                                UserGuardAssignment a;
+                                if (exist.isPresent()) {
+                                        a = exist.get();
+                                        a.setTimesAssigned(a.getTimesAssigned() + 1);
+                                } else {
+                                        a = new UserGuardAssignment();
+                                        a.setCategory(category);
+                                        a.setOfficer(officer);
+                                        a.setTimesAssigned(1);
+                                }
+
+                                a.setStatus("Active");
+                                a.setAssignedAt(LocalDateTime.now());
+
+                                if (!active.isEmpty()) {
+                                        a.setStartAt(active.get(0).getStartAt());
+                                        a.setEndAt(active.get(0).getEndAt());
+                                }
+
+                                created.add(a);
+                        }
+
+                        if (!created.isEmpty()) {
+                                responseDetails.addAll(assignmentRepository.saveAll(created));
+                        }
+
+                        List<UserGuardAssignment> nowActive = assignmentRepository
+                                        .findByCategoryAndGuardLevelAndStatus(category, level, "Active");
+
+                        summaries.add(new AssignmentSummary(level,
+                                        requestedCount,
+                                        nowActive.size(),
+                                        Math.max(0, requestedCount - nowActive.size())));
+
+                        responseDetails.addAll(nowActive);
+                }
+
+                category.setStatus("Active");
+                categoryRepository.save(category);
+
+                AssignmentResponse resp = new AssignmentResponse();
+                resp.setSummary(summaries);
+                resp.setDetails(responseDetails);
+
+                return resp;
         }
 
-        AssignmentResponse resp = new AssignmentResponse();
-        resp.setSummary(summaries);
-        resp.setDetails(responseDetails);
-        return resp;
-    }
-
-    @Transactional(readOnly = true)
-    public AssignmentResponse getAssignmentResponseForCategory(Long categoryId) {
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("Category not found for id: " + categoryId));
-
-        // Use JPQL join fetch to load officer together with assignments
-        String jpql = "select a from UserGuardAssignment a left join fetch a.officer where a.category.id = :catId";
-        TypedQuery<UserGuardAssignment> q = em.createQuery(jpql, UserGuardAssignment.class);
-        q.setParameter("catId", category.getId());
-        List<UserGuardAssignment> allForCategory = q.getResultList();
-
-        // Debug prints
-        System.out.println("Category fetched: " + category);
-        System.out.println("total assignments for category " + category.getId() + ": "
-                + (allForCategory == null ? 0 : allForCategory.size()));
-        if (allForCategory != null) {
-            allForCategory.forEach(a -> System.out.println("assignId=" + a.getId()
-                    + " status=" + a.getStatus()
-                    + " officer="
-                    + (a.getOfficer() == null ? "null" : a.getOfficer().getId() + ":" + a.getOfficer().getRank())));
-        }
-
-        // Build summary of Active assignments grouped by officer.rank
-        Map<String, Long> assignedByLevel = Optional.ofNullable(allForCategory).orElseGet(Collections::emptyList)
-                .stream()
-                .filter(a -> "Active".equalsIgnoreCase(a.getStatus()))
-                .collect(Collectors.groupingBy(
-                        a -> (a.getOfficer() == null || a.getOfficer().getRank() == null) ? "UNASSIGNED"
-                                : a.getOfficer().getRank(),
-                        Collectors.counting()));
-
-        List<AssignmentSummary> summaries = assignedByLevel.entrySet().stream()
-                .map(e -> new AssignmentSummary(e.getKey(), 0, e.getValue().intValue(), 0))
-                .collect(Collectors.toList());
-
-        AssignmentResponse resp = new AssignmentResponse();
-        resp.setSummary(summaries);
-
-        // Details: only active assignments (change this if you want both Active +
-        // Inactive)
-        List<UserGuardAssignment> details = Optional.ofNullable(allForCategory).orElseGet(Collections::emptyList)
-                .stream()
-                .filter(a -> "Active".equalsIgnoreCase(a.getStatus()))
-                .collect(Collectors.toList());
-        resp.setDetails(details);
-
-        System.out.println("Returning AssignmentResponse: " + resp);
-        return resp;
-    }
-
-    @Transactional(readOnly = true)
-    public OfficerDuty getVipForGuard(Long officerId) {
-        OfficerDuty offic = new OfficerDuty();
-        UserGuardAssignment assignment = assignmentRepository
-                .findFirstByOfficerIdAndStatusOrderByAssignedAtDesc(officerId, "Active")
-                .orElseThrow(() -> new RuntimeException(
-                        "No active VIP assignment found for guard id: " + officerId));
-        Category categ = assignment.getCategory();
-
-        offic.setName(categ.getName());
-        offic.setDesignation(categ.getDesignation());
-        offic.setStartAt(assignment.getStartAt());
-        offic.setEndAt(assignment.getEndAt());
-
-        return offic; // this is the VIP
-    }
 }

@@ -1,8 +1,11 @@
 com/infotech/controller/CategoryController.class
+com/infotech/controller/DecisionController.class
 com/infotech/config/SecurityConfig.class
 com/infotech/repository/AdminRepsitory.class
+com/infotech/repository/LeaveRequestRepository.class
 com/infotech/controller/AssignmentController.class
 com/infotech/entity/AdminEntity.class
+com/infotech/dto/AssignmentDetailDTO.class
 com/infotech/service/AdminService.class
 com/infotech/entity/Category.class
 com/infotech/service/AssignmentService.class
@@ -31,3 +34,4 @@ com/infotech/service/CustomUserDetailsService.class
 com/infotech/dto/Logindat.class
 com/infotech/dto/LoginResponse.class
 com/infotech/service/UserService.class
+com/infotech/entity/LeaveRequest.class

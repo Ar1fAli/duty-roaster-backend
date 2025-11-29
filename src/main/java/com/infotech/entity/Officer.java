@@ -29,6 +29,8 @@ public class Officer {
     private String email;
     private String rank;
     private String status;
+    // private String reqstatus;
+    // private String reasonmes;
 
     private Long experience;
     private Long contactno;

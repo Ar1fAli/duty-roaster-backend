@@ -1,5 +1,7 @@
 package com.infotech.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -12,18 +14,18 @@ import lombok.Data;
 
 @Data
 @Entity
-public class LeaveRequest {
+public class Accident {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "officerId", nullable = false)
-    // @JsonIgnore
+    @JoinColumn(name = "categoryId", nullable = false)
     private Officer officer;
 
-    private String status;
+    private String req;
     private String message;
-    private boolean current;
+
+    private LocalDateTime assignedAt;
 }

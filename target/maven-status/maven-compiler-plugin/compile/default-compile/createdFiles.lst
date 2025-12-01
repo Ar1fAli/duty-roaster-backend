@@ -8,6 +8,7 @@ com/infotech/entity/AdminEntity.class
 com/infotech/dto/AssignmentDetailDTO.class
 com/infotech/service/AdminService.class
 com/infotech/entity/Category.class
+com/infotech/repository/AccidentRepository.class
 com/infotech/service/AssignmentService.class
 com/infotech/controller/OfficerController.class
 com/infotech/dto/AssignmentSummary.class
@@ -15,6 +16,7 @@ com/infotech/controller/AdminController.class
 com/infotech/service/AdminServiceImp.class
 com/infotech/service/JwtService.class
 com/infotech/repository/UserGuardAssignmentRepository.class
+com/infotech/entity/Accident.class
 com/infotech/entity/DataItem.class
 com/infotech/repository/CategoryRepository.class
 com/infotech/repository/UserRepository.class
@@ -22,6 +24,7 @@ com/infotech/service/JwtFilter.class
 com/infotech/dto/AssignmentResponse.class
 com/infotech/dto/GuardLevelRequest.class
 com/infotech/repository/OfficerRepository.class
+com/infotech/dto/Accidentreq.class
 com/infotech/entity/UserGuardAssignment.class
 com/infotech/UserCategoryApiApplication.class
 com/infotech/controller/UserController.class

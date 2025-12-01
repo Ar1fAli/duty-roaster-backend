@@ -1,8 +1,12 @@
 package com.infotech.controller;
 
+import java.util.List;
+
 import com.infotech.dto.AssignmentResponse;
 import com.infotech.dto.GuardAssignmentRequest;
 import com.infotech.dto.OfficerDuty;
+import com.infotech.entity.Officer;
+import com.infotech.entity.UserGuardAssignment;
 import com.infotech.service.AssignmentService;
 
 import org.springframework.http.ResponseEntity;
@@ -23,57 +27,82 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AssignmentController {
 
-    private final AssignmentService assignmentService;
+        private final AssignmentService assignmentService;
 
-    @PostMapping("/auto")
-    public ResponseEntity<AssignmentResponse> autoAssignGuards(
-            @RequestBody GuardAssignmentRequest request) {
+        @PostMapping("/auto")
+        public ResponseEntity<AssignmentResponse> autoAssignGuards(
+                        @RequestBody GuardAssignmentRequest request) {
 
-        AssignmentResponse response = assignmentService.assignGuardsAutomatically(request);
-        return ResponseEntity.ok(response);
-    }
+                AssignmentResponse response = assignmentService.assignGuardsAutomatically(request);
+                return ResponseEntity.ok(response);
+        }
 
-    /**
-     * Read endpoint for frontend to fetch current assignments for a category
-     * (user).
-     * Frontend should call this on page load and call POST /auto only when assigned
-     * < requested.
-     */
-    @GetMapping("/{categoryId}")
-    public ResponseEntity<AssignmentResponse> getAssignmentsForCategory(@PathVariable Long categoryId) {
-        AssignmentResponse response = assignmentService.getAssignmentResponseForCategory(categoryId);
-        return ResponseEntity.ok(response);
-    }
+        /**
+         * Read endpoint for frontend to fetch current assignments for a category
+         * (user).
+         * Frontend should call this on page load and call POST /auto only when assigned
+         * < requested.
+         */
+        @GetMapping("/{categoryId}")
+        public ResponseEntity<AssignmentResponse> getAssignmentsForCategory(@PathVariable Long categoryId) {
+                AssignmentResponse response = assignmentService.getAssignmentResponseForCategory(categoryId);
+                return ResponseEntity.ok(response);
+        }
 
-    @GetMapping("/getvip/{guardId}")
-    public OfficerDuty getVipForGuard(@PathVariable Long guardId) {
-        return assignmentService.getVipForGuard(guardId);
-    }
+        @GetMapping("/getvip/{guardId}")
+        public OfficerDuty getVipForGuard(@PathVariable Long guardId) {
+                return assignmentService.getVipForGuard(guardId);
+        }
 
-    @PostMapping("/{assignmentId}/leave")
-    public AssignmentResponse markGuardOnLeave(
-            @PathVariable Long assignmentId,
-            @RequestBody GuardAssignmentRequest requirement) {
+        @PostMapping("/{assignmentId}/leave")
+        public AssignmentResponse markGuardOnLeave(
+                        @PathVariable Long assignmentId,
+                        @RequestBody GuardAssignmentRequest requirement) {
 
-        return assignmentService.markGuardOnLeaveAndRefillit(assignmentId, requirement);
-    }
+                return assignmentService.markGuardOnLeaveAndRefillit(assignmentId, requirement);
+        }
 
-    @PostMapping("/refill")
-    public ResponseEntity<AssignmentResponse> refillMissingGuards(
-            @RequestParam("vipId") Long vipId,
-            @RequestParam("level") String level,
-            @RequestParam("missing") int missing) {
+        @PostMapping("/refill")
+        public ResponseEntity<AssignmentResponse> refillMissingGuards(
+                        @RequestParam("vipId") Long vipId,
+                        @RequestParam("level") String level,
+                        @RequestParam("missing") int missing) {
 
-        AssignmentResponse response = assignmentService.markGuardOnLeaveAndRefill(vipId, level, missing);
-        return ResponseEntity.ok(response);
-    }
+                AssignmentResponse response = assignmentService.markGuardOnLeaveAndRefill(vipId, level, missing);
+                return ResponseEntity.ok(response);
+        }
 
-    @PostMapping("/{vipId}/refill")
-    public AssignmentResponse refillGuards(
-            @PathVariable Long vipId,
-            @RequestBody GuardAssignmentRequest request) {
+        @PostMapping("/{vipId}/refill")
+        public AssignmentResponse refillGuards(
+                        @PathVariable Long vipId,
+                        @RequestBody GuardAssignmentRequest request) {
 
-        return assignmentService.refillMissingGuards(vipId, request);
-    }
+                return assignmentService.refillMissingGuards(vipId, request);
+        }
+
+        @GetMapping("/getallguard")
+        public List<UserGuardAssignment> getHistory(@RequestBody Officer officer) {
+                return assignmentService.getHistory(officer);
+
+        }
+
+        @GetMapping("/guard/{officerId}/history")
+        public List<UserGuardAssignment> getGuardHistory(@PathVariable Long officerId) {
+                System.out.println(officerId);
+                return assignmentService.getGuardHistory(officerId);
+        }
+
+        @GetMapping("/vip/{categoryId}/history")
+        public List<UserGuardAssignment> getVipHistory(@PathVariable Long categoryId) {
+                System.out.println(categoryId);
+                return assignmentService.getVipHistory(categoryId);
+        }
+
+        @GetMapping("/getall")
+        public List<UserGuardAssignment> getAllHistory() {
+
+                return assignmentService.getAllHistory();
+
+        }
 
 }

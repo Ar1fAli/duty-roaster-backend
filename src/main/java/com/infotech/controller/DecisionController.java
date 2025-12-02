@@ -3,6 +3,7 @@ package com.infotech.controller;
 import java.util.List;
 
 import com.infotech.dto.Accidentreq;
+import com.infotech.dto.LeaveReq;
 import com.infotech.entity.Accident;
 import com.infotech.entity.LeaveRequest;
 import com.infotech.repository.AccidentRepository;
@@ -30,18 +31,39 @@ public class DecisionController {
 
     @PostMapping("/decision")
     public LeaveRequest createCategorye(@RequestBody LeaveRequest req) {
+
         System.out.println(req.getStatus());
         System.out.println(req.getMessage());
         System.out.println(req.getOfficer());
         req.setCurrent(true);
+
         return leaveRequestRepository.save(req);
+    }
+
+    @PostMapping("/decision/management")
+    public LeaveRequest createCategorye(@RequestBody LeaveReq req) {
+
+        System.out.println(req.getStatus());
+
+        System.out.println("id is this " + req.getId());
+        System.out.println("req is this " + req.getStatus());
+
+        LeaveRequest acc = leaveRequestRepository.findById(req.getId())
+                .orElseThrow(() -> new RuntimeException("Accident not found with id: " + req.getId()));
+
+        acc.setId(req.getId());
+        acc.setStatus(req.getStatus());
+        acc.setCurrent(true);
+
+        return leaveRequestRepository.save(acc);
     }
 
     @PostMapping("/accident")
     public Accident createCategorye(@RequestBody Accident req) {
         System.out.println(req.getReq());
         System.out.println(req.getMessage());
-        System.out.println(req.getOfficer());
+        System.out.println(req.getGuardData());
+
         return accidentRepository.save(req);
     }
 
@@ -55,9 +77,30 @@ public class DecisionController {
         return ResponseEntity.ok(leaveRequestRepository.findByOfficer_IdAndCurrent(id, true));
     }
 
-    @PostMapping("/accidentreq")
-    public ResponseEntity<List<Accident>> getIncidient(@RequestBody Accidentreq req) {
-        return ResponseEntity.ok(accidentRepository.findByOfficer_IdAndReq(req.getId(), req.getReq()));
+    @GetMapping("/accidentreq/{id}")
+    public ResponseEntity<List<Accident>> getIncidient(@PathVariable Long id) {
+        return ResponseEntity.ok(accidentRepository.findByGuardData_Id(id));
+    }
+
+    @GetMapping("/accidentall")
+    public ResponseEntity<List<Accident>> getIncidient() {
+        return ResponseEntity.ok(accidentRepository.findAll());
+    }
+
+    @PostMapping("/accidentupdate")
+    public ResponseEntity<Accident> accidentUpdate(@RequestBody Accidentreq req) {
+
+        System.out.println("id is this " + req.getId());
+        System.out.println("req is this " + req.getReq());
+
+        Accident acc = accidentRepository.findById(req.getId())
+                .orElseThrow(() -> new RuntimeException("Accident not found with id: " + req.getId()));
+
+        acc.setId(req.getId());
+        acc.setReq(req.getReq());
+        accidentRepository.save(acc);
+
+        return ResponseEntity.ok(acc);
     }
 
 }

@@ -7,8 +7,8 @@ OFFICER_URL="$BASE_URL/api/officer"
 CREDENTIALS_FILE="officer_credentials.csv"
 
 # Admin credentials for login
-ADMIN_USERNAME="admin1"
-ADMIN_PASSWORD="admin1"
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD="admin"
 
 # Name arrays (50 first + 50 last = 2500 unique combinations)
 first_names=(
@@ -27,7 +27,7 @@ last_names=(
     "Pal" "Raichand" "Arvind" "Rajput" "More" "Bhardwaj" "Kohli" "Grover" "Kaul" "Soni"
 )
 
-total=800
+total=1000
 base_contact=9810001001
 
 # === STEP 1: LOGIN TO GET BEARER TOKEN ===
@@ -94,11 +94,11 @@ for ((i = 1; i <= total; i++)); do
     # ===== OTHER FIELDS =====
     contactno=$((base_contact + i - 1))
     experience=$(((i - 1) % 20 + 1)) # 1 to 20 years
-    password="Officer@$i"
+    password="guard"
     status="Inactive"
 
     # ===== SAVE CREDENTIALS =====
-    echo "$username,$password" >>"$CREDENTIALS_FILE"
+    # echo "$username,$password" >>"$CREDENTIALS_FILE"
 
     # ===== JSON PAYLOAD (NO 'id' — let DB generate) =====
     json="{\"contactno\":\"$contactno\",\"email\":\"$email\",\"experience\":$experience,\"name\":\"$name\",\"rank\":\"$rank\",\"status\":\"$status\",\"username\":\"$username\",\"password\":\"$password\"}"

@@ -1,10 +1,13 @@
 package com.infotech.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import com.infotech.entity.Category;
+import com.infotech.entity.HistoryManagement;
 import com.infotech.repository.CategoryRepository;
+import com.infotech.repository.HistoryManagementRepository;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -27,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 public class CategoryController {
 
     private final PasswordEncoder encoder;
+    private final HistoryManagementRepository historyManagementRepository;
 
     private final CategoryRepository categoryRepository;
 
@@ -38,6 +42,7 @@ public class CategoryController {
     @PostMapping
     public Category createCategory(@RequestBody Category category) {
         category.setPassword(encoder.encode(category.getPassword()));
+        category.setCreatedTime(LocalDateTime.now());
         return categoryRepository.save(category);
     }
 
@@ -52,6 +57,13 @@ public class CategoryController {
             category.setContactno(updatedCategory.getContactno());
             category.setUsername(updatedCategory.getUsername());
             category.setPassword(encoder.encode(updatedCategory.getPassword()));
+
+            HistoryManagement history = new HistoryManagement();
+
+            history.setTime(LocalDateTime.now());
+            history.setOprationType("update");
+            history.setOperatedBy("Guard");
+            history.setOperatorId(category.getId());
 
             System.out.println("updated category p" + updatedCategory.getPassword());
 
@@ -70,7 +82,11 @@ public class CategoryController {
 
     @DeleteMapping("/{id}")
     public void deleteCategory(@PathVariable Long id) {
-        categoryRepository.deleteById(id);
+        Category cat = categoryRepository.findById(id).map(category -> {
+            category.setStatus("Deleted");
+            return categoryRepository.save(category);
+        }).orElseThrow(() -> new RuntimeException("Category not found with id " + id));
+        System.out.println("data deleted Successfully");
     }
 
     @GetMapping("/profile")

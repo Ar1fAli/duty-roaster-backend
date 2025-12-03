@@ -6,6 +6,7 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/AssignmentController.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/CategoryController.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/DecisionController.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/EditedController.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/NotificationController.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/OfficerController.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/UserController.java
@@ -18,11 +19,14 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/LeaveReq.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/LoginResponse.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/Logindat.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/NotificationRead.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/OfficerDuty.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/Accident.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/AdminEntity.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/Category.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/DataItem.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/EditedOfficer.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/HistoryManagement.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/LeaveRequest.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/NotificationCategory.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/NotificationGuard.java
@@ -34,6 +38,8 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/AccidentRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/AdminRepsitory.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/CategoryRepository.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/EditedOfficerRepository.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/HistoryManagementRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/LeaveRequestRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/NotificationCategoryRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/NotificationGuardRepository.java

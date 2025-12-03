@@ -27,5 +27,6 @@ public class Accident {
     private String req;
     private String message;
 
-    private LocalDateTime assignedAt;
+    private LocalDateTime requestTime;
+    private LocalDateTime responseTime;
 }

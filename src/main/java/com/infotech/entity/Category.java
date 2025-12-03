@@ -1,5 +1,7 @@
 package com.infotech.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -32,4 +34,5 @@ public class Category {
     private String password;
     private String designation;
     private String status;
+    private LocalDateTime createdTime;
 }

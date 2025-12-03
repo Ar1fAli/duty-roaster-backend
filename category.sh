@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # === CONFIGURATION ===
-LOGIN_URL="https://duty-roaster-backend.onrender.com/auth/login"
-CATEGORIES_URL="https://duty-roaster-backend.onrender.com/api/categories"
+LOGIN_URL="http://192.168.29.46:8081/auth/login"
+CATEGORIES_URL="http://192.168.29.46:8081/api/categories"
 CREDENTIALS_FILE="credentials.txt"
 
 # Admin credentials
-ADMIN_USERNAME="himanshu"
+ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="admin"
 
 # Name arrays
@@ -26,7 +26,7 @@ last_names=(
 designations=("Bollywood Actor" "Cricketers" "Chessmaster" "User")
 designation_emails=("actor" "cricketer" "chess" "user")
 
-total=800
+total=100
 start_id=1
 start_contact=9810000001
 
@@ -74,7 +74,7 @@ for ((i = 0; i < total; i++)); do
     email="${first,,}.${desig_email}@example.com"
 
     username="${first,,}$id"
-    password="User@$id"
+    password="vip"
 
     echo "$username,$password" >>"$CREDENTIALS_FILE"
 

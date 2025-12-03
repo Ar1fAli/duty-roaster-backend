@@ -1,5 +1,6 @@
 package com.infotech.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.infotech.dto.Accidentreq;
@@ -36,6 +37,7 @@ public class DecisionController {
         System.out.println(req.getMessage());
         System.out.println(req.getOfficer());
         req.setCurrent(true);
+        req.setRequestTime(LocalDateTime.now());
 
         return leaveRequestRepository.save(req);
     }
@@ -54,6 +56,7 @@ public class DecisionController {
         acc.setId(req.getId());
         acc.setStatus(req.getStatus());
         acc.setCurrent(true);
+        acc.setResponseTime(LocalDateTime.now());
 
         return leaveRequestRepository.save(acc);
     }
@@ -63,6 +66,7 @@ public class DecisionController {
         System.out.println(req.getReq());
         System.out.println(req.getMessage());
         System.out.println(req.getGuardData());
+        req.setRequestTime(LocalDateTime.now());
 
         return accidentRepository.save(req);
     }
@@ -98,6 +102,7 @@ public class DecisionController {
 
         acc.setId(req.getId());
         acc.setReq(req.getReq());
+        acc.setResponseTime(LocalDateTime.now());
         accidentRepository.save(acc);
 
         return ResponseEntity.ok(acc);

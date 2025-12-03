@@ -84,6 +84,10 @@ public class OfficerController {
 
     @DeleteMapping("/{id}")
     public void deleteOfficer(@PathVariable Long id) {
-        officerRepository.deleteById(id);
+        Officer cat = officerRepository.findById(id).map(category -> {
+            category.setStatus("Deleted");
+            return officerRepository.save(category);
+        }).orElseThrow(() -> new RuntimeException("Category not found with id " + id));
+        System.out.println("data deleted Successfully");
     }
 }

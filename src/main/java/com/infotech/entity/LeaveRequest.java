@@ -1,5 +1,7 @@
 package com.infotech.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -26,4 +28,8 @@ public class LeaveRequest {
     private String status;
     private String message;
     private boolean current;
+
+    private LocalDateTime requestTime;
+    private LocalDateTime responseTime;
+
 }

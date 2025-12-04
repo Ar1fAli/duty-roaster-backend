@@ -21,6 +21,8 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/Logindat.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/NotificationRead.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/OfficerDuty.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/OfficerRequestDto.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/OfficerResponseDto.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/Accident.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/AdminEntity.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/Category.java
@@ -34,6 +36,10 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/OfficerName.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/UserEntity.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/UserGuardAssignment.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/exception/ApiError.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/exception/BadRequestException.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/exception/GlobalExceptionHandler.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/exception/ResourceNotFoundException.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/mapper/AssignmentMapper.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/AccidentRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/AdminRepsitory.java
@@ -49,7 +55,9 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/AdminService.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/AdminServiceImp.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/AssignmentService.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/CategoryService.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/CustomUserDetailsService.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/JwtFilter.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/JwtService.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/OfficerService.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/UserService.java

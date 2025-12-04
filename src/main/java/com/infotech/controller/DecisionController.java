@@ -7,8 +7,10 @@ import com.infotech.dto.Accidentreq;
 import com.infotech.dto.LeaveReq;
 import com.infotech.entity.Accident;
 import com.infotech.entity.LeaveRequest;
+import com.infotech.entity.Officer;
 import com.infotech.repository.AccidentRepository;
 import com.infotech.repository.LeaveRequestRepository;
+import com.infotech.service.AssignmentService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -29,6 +31,7 @@ public class DecisionController {
 
     private final LeaveRequestRepository leaveRequestRepository;
     private final AccidentRepository accidentRepository;
+    private final AssignmentService assignmentService;
 
     @PostMapping("/decision")
     public LeaveRequest createCategorye(@RequestBody LeaveRequest req) {
@@ -43,22 +46,50 @@ public class DecisionController {
     }
 
     @PostMapping("/decision/management")
-    public LeaveRequest createCategorye(@RequestBody LeaveReq req) {
+    public ResponseEntity<LeaveRequest> decideLeave(@RequestBody LeaveReq req) {
 
-        System.out.println(req.getStatus());
+        System.out.println("status is " + req.getStatus());
+        System.out.println("id is " + req.getId());
 
-        System.out.println("id is this " + req.getId());
-        System.out.println("req is this " + req.getStatus());
+        LeaveRequest leave = leaveRequestRepository.findById(req.getId())
+                .orElseThrow(() -> new RuntimeException("LeaveRequest not found with id: " + req.getId()));
 
-        LeaveRequest acc = leaveRequestRepository.findById(req.getId())
-                .orElseThrow(() -> new RuntimeException("Accident not found with id: " + req.getId()));
+        // keep old status so we only trigger once
+        String oldStatus = leave.getStatus();
 
-        acc.setId(req.getId());
-        acc.setStatus(req.getStatus());
-        acc.setCurrent(true);
-        acc.setResponseTime(LocalDateTime.now());
+        leave.setStatus(req.getStatus());
+        leave.setCurrent(true);
+        leave.setResponseTime(LocalDateTime.now());
+        leaveRequestRepository.save(leave);
 
-        return leaveRequestRepository.save(acc);
+        // accepted statuses
+        boolean isNowAccepted = "admin_accepted".equalsIgnoreCase(req.getStatus())
+                || "manager_accepted".equalsIgnoreCase(req.getStatus());
+
+        // boolean wasAcceptedBefore = "admin_accepted".equalsIgnoreCase(oldStatus)
+        // || "manager_accepted".equalsIgnoreCase(oldStatus);
+        //
+        // only trigger operation when changing from NOT accepted -> accepted
+        if (isNowAccepted) {
+
+            // 🔹 adjust this depending on your LeaveRequest entity:
+            // e.g. leave.getOfficer() or leave.getGuardData()
+            Officer officer = leave.getOfficer(); // <-- change to getGuardData() if needed
+
+            if (officer == null || officer.getId() == null) {
+                throw new RuntimeException("No guard linked to leave request id: " + req.getId());
+            }
+
+            Long officerId = officer.getId();
+
+            // This will:
+            // 1) mark the guard's last active assignment as Inactive
+            // 2) set guard status = Inactive
+            // 3) refill one guard for that VIP/category
+            assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId);
+        }
+
+        return ResponseEntity.ok(leave);
     }
 
     @PostMapping("/accident")
@@ -91,6 +122,25 @@ public class DecisionController {
         return ResponseEntity.ok(accidentRepository.findAll());
     }
 
+    // @PostMapping("/accidentupdate")
+    // public ResponseEntity<Accident> accidentUpdate(@RequestBody Accidentreq req)
+    // {
+    //
+    // System.out.println("id is this " + req.getId());
+    // System.out.println("req is this " + req.getReq());
+    //
+    // Accident acc = accidentRepository.findById(req.getId())
+    // .orElseThrow(() -> new RuntimeException("Accident not found with id: " +
+    // req.getId()));
+    //
+    // acc.setId(req.getId());
+    // acc.setReq(req.getReq());
+    // acc.setResponseTime(LocalDateTime.now());
+    // accidentRepository.save(acc);
+    //
+    // return ResponseEntity.ok(acc);
+    // }
+
     @PostMapping("/accidentupdate")
     public ResponseEntity<Accident> accidentUpdate(@RequestBody Accidentreq req) {
 
@@ -98,12 +148,41 @@ public class DecisionController {
         System.out.println("req is this " + req.getReq());
 
         Accident acc = accidentRepository.findById(req.getId())
-                .orElseThrow(() -> new RuntimeException("Accident not found with id: " + req.getId()));
+                .orElseThrow(() -> new RuntimeException(
+                        "Accident not found with id: " + req.getId()));
 
-        acc.setId(req.getId());
+        // old status to detect first-time acceptance
+        String oldStatus = acc.getReq();
+
+        // update status + response time
         acc.setReq(req.getReq());
         acc.setResponseTime(LocalDateTime.now());
         accidentRepository.save(acc);
+
+        // accepted statuses
+        boolean isNowAccepted = "admin_rejected".equalsIgnoreCase(req.getReq())
+                || "manager_rejected".equalsIgnoreCase(req.getReq());
+
+        // boolean wasAcceptedBefore = "admin_accepted".equalsIgnoreCase(oldStatus)
+        // || "manager_accepted".equalsIgnoreCase(oldStatus);
+        //
+        // only trigger when changing from NOT accepted -> accepted
+        if (isNowAccepted) {
+
+            Officer guard = acc.getGuardData();
+            if (guard == null || guard.getId() == null) {
+                throw new RuntimeException(
+                        "No guard linked to accident id: " + req.getId());
+            }
+
+            Long officerId = guard.getId();
+
+            // this will:
+            // 1) mark guard's active assignment Inactive
+            // 2) set guard status = Inactive
+            // 3) refill one guard for that VIP/category
+            assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId);
+        }
 
         return ResponseEntity.ok(acc);
     }

@@ -1,13 +1,106 @@
+// package com.infotech.controller;
+//
+// import java.util.List;
+// import java.util.Optional;
+//
+// import com.infotech.entity.Officer;
+// import com.infotech.repository.LeaveRequestRepository;
+// import com.infotech.repository.OfficerRepository;
+//
+// import org.springframework.security.crypto.password.PasswordEncoder;
+// import org.springframework.web.bind.annotation.CrossOrigin;
+// import org.springframework.web.bind.annotation.DeleteMapping;
+// import org.springframework.web.bind.annotation.GetMapping;
+// import org.springframework.web.bind.annotation.PathVariable;
+// import org.springframework.web.bind.annotation.PostMapping;
+// import org.springframework.web.bind.annotation.PutMapping;
+// import org.springframework.web.bind.annotation.RequestBody;
+// import org.springframework.web.bind.annotation.RequestMapping;
+// import org.springframework.web.bind.annotation.RequestParam;
+// import org.springframework.web.bind.annotation.RestController;
+//
+// import lombok.RequiredArgsConstructor;
+//
+// @RestController
+// @RequestMapping("/api/officer")
+// // @CrossOrigin(origins = "http://localhost:5173")
+// @CrossOrigin(origins = "*")
+// @RequiredArgsConstructor
+// public class OfficerController {
+//
+//     private final OfficerRepository officerRepository;
+//     private final LeaveRequestRepository leaveRequestRepository;
+//     private final PasswordEncoder encoder;
+//
+//     @GetMapping
+//     public List<Officer> getAllOfficer() {
+//         return officerRepository.findAll();
+//     }
+//
+//     @PostMapping
+//     public Officer createCategory(@RequestBody Officer officer) {
+//
+//         officer.setPassword(encoder.encode(officer.getPassword()));
+//         return officerRepository.save(officer);
+//     }
+//
+//     @GetMapping("/profile")
+//     public Optional<Officer> getOfficer(@RequestParam String username) {
+//         Optional<Officer> admindata = officerRepository.findByUsername(username);
+//         return admindata;
+//     }
+//
+//     @PutMapping("/{id}")
+//     public Officer updateOfficer(@PathVariable Long id, @RequestBody Officer updatedOfficer) {
+//         return officerRepository.findById(id).map(officer -> {
+//             // officer.setGuard_id(updatedOfficer.getGuard_id());
+//             officer.setName(updatedOfficer.getName());
+//             officer.setEmail(updatedOfficer.getEmail());
+//             officer.setRank(updatedOfficer.getRank());
+//             officer.setStatus(updatedOfficer.getStatus());
+//             // officer.setReqstatus(updatedOfficer.getReqstatus());
+//             // officer.setReasonmes(updatedOfficer.getReasonmes());
+//             officer.setExperience(updatedOfficer.getExperience());
+//             officer.setContactno(updatedOfficer.getContactno());
+//             System.out.println("updated password " + updatedOfficer.getPassword());
+//             officer.setPassword(encoder.encode(updatedOfficer.getPassword()));
+//
+//             System.out.println("updated password " + updatedOfficer.getPassword());
+//
+//             officer.setUsername(updatedOfficer.getUsername());
+//
+//             // Clear existing items (important for orphanRemoval = true)
+//             // officer.getOfficerName().clear();
+//
+//             // Add updated items with proper category assignment
+//             // for (OfficerName item : updatedOfficer.getOfficerName()) {
+//             // item.setOfficer(officer);
+//             // officer.getOfficerName().add(item);
+//             // }
+//
+//             return officerRepository.save(officer);
+//         }).orElseThrow(() -> new RuntimeException("Category not found with id " + id));
+//     }
+//
+//     @DeleteMapping("/{id}")
+//     public void deleteOfficer(@PathVariable Long id) {
+//         Officer cat = officerRepository.findById(id).map(category -> {
+//             category.setStatus("Deleted");
+//             return officerRepository.save(category);
+//         }).orElseThrow(() -> new RuntimeException("Category not found with id " + id));
+//         System.out.println("data deleted Successfully");
+//     }
+// }
+
 package com.infotech.controller;
 
-import java.util.List;
-import java.util.Optional;
-
-import com.infotech.entity.Officer;
+import com.infotech.dto.OfficerRequestDto;
+import com.infotech.dto.OfficerResponseDto;
 import com.infotech.repository.LeaveRequestRepository;
-import com.infotech.repository.OfficerRepository;
+import com.infotech.service.OfficerService;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,71 +116,62 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/officer")
-// @CrossOrigin(origins = "http://localhost:5173")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class OfficerController {
 
-    private final OfficerRepository officerRepository;
-    private final LeaveRequestRepository leaveRequestRepository;
-    private final PasswordEncoder encoder;
+    private final OfficerService officerService;
+    private final LeaveRequestRepository leaveRequestRepository; // keep if used elsewhere
 
+    // In real app, read from SecurityContext
+    private String getCurrentOperator() {
+        return "Guard";
+    }
+
+    // LIST with pagination & filters
     @GetMapping
-    public List<Officer> getAllOfficer() {
-        return officerRepository.findAll();
+    public Page<OfficerResponseDto> getOfficers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String rank) {
+
+        return officerService.getOfficers(page, size, status, rank);
     }
 
-    @PostMapping
-    public Officer createCategory(@RequestBody Officer officer) {
-
-        officer.setPassword(encoder.encode(officer.getPassword()));
-        return officerRepository.save(officer);
-    }
-
+    // GET by username (profile)
     @GetMapping("/profile")
-    public Optional<Officer> getOfficer(@RequestParam String username) {
-        Optional<Officer> admindata = officerRepository.findByUsername(username);
-        return admindata;
+    public ResponseEntity<OfficerResponseDto> getOfficer(@RequestParam String username) {
+        return officerService.getByUsername(username)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
+    // GET by id (optional)
+    @GetMapping("/{id}")
+    public ResponseEntity<OfficerResponseDto> getOfficerById(@PathVariable Long id) {
+        return ResponseEntity.ok(officerService.getByIdDto(id));
+    }
+
+    // CREATE or RESTORE
+    @PostMapping
+    public ResponseEntity<OfficerResponseDto> createOfficer(@RequestBody OfficerRequestDto officerDto) {
+        OfficerResponseDto saved = officerService.createOrRestoreOfficer(officerDto, getCurrentOperator());
+        return ResponseEntity.ok(saved);
+    }
+
+    // UPDATE
     @PutMapping("/{id}")
-    public Officer updateOfficer(@PathVariable Long id, @RequestBody Officer updatedOfficer) {
-        return officerRepository.findById(id).map(officer -> {
-            // officer.setGuard_id(updatedOfficer.getGuard_id());
-            officer.setName(updatedOfficer.getName());
-            officer.setEmail(updatedOfficer.getEmail());
-            officer.setRank(updatedOfficer.getRank());
-            officer.setStatus(updatedOfficer.getStatus());
-            // officer.setReqstatus(updatedOfficer.getReqstatus());
-            // officer.setReasonmes(updatedOfficer.getReasonmes());
-            officer.setExperience(updatedOfficer.getExperience());
-            officer.setContactno(updatedOfficer.getContactno());
-            System.out.println("updated password " + updatedOfficer.getPassword());
-            officer.setPassword(encoder.encode(updatedOfficer.getPassword()));
-
-            System.out.println("updated password " + updatedOfficer.getPassword());
-
-            officer.setUsername(updatedOfficer.getUsername());
-
-            // Clear existing items (important for orphanRemoval = true)
-            // officer.getOfficerName().clear();
-
-            // Add updated items with proper category assignment
-            // for (OfficerName item : updatedOfficer.getOfficerName()) {
-            // item.setOfficer(officer);
-            // officer.getOfficerName().add(item);
-            // }
-
-            return officerRepository.save(officer);
-        }).orElseThrow(() -> new RuntimeException("Category not found with id " + id));
+    public ResponseEntity<OfficerResponseDto> updateOfficer(@PathVariable Long id,
+            @RequestBody OfficerRequestDto updatedDto) {
+        OfficerResponseDto updated = officerService.updateOfficer(id, updatedDto, getCurrentOperator());
+        return ResponseEntity.ok(updated);
     }
 
+    // SOFT DELETE
     @DeleteMapping("/{id}")
-    public void deleteOfficer(@PathVariable Long id) {
-        Officer cat = officerRepository.findById(id).map(category -> {
-            category.setStatus("Deleted");
-            return officerRepository.save(category);
-        }).orElseThrow(() -> new RuntimeException("Category not found with id " + id));
-        System.out.println("data deleted Successfully");
+    public ResponseEntity<Void> deleteOfficer(@PathVariable Long id) {
+        officerService.softDeleteOfficer(id, getCurrentOperator());
+        return ResponseEntity.noContent().build();
     }
 }

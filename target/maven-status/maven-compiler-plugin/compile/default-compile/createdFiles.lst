@@ -1,4 +1,5 @@
 com/infotech/controller/CategoryController.class
+com/infotech/service/CategoryService.class
 com/infotech/controller/DecisionController.class
 com/infotech/config/SecurityConfig.class
 com/infotech/repository/AdminRepsitory.class
@@ -9,13 +10,19 @@ com/infotech/entity/Category.class
 com/infotech/repository/NotificationGuardRepository.class
 com/infotech/controller/OfficerController.class
 com/infotech/dto/AssignmentSummary.class
+com/infotech/service/OfficerService.class
 com/infotech/entity/EditedOfficer.class
 com/infotech/controller/EditedController.class
 com/infotech/repository/NotificationCategoryRepository.class
 com/infotech/service/AdminServiceImp.class
 com/infotech/dto/LeaveReq.class
+com/infotech/exception/BadRequestException.class
+com/infotech/dto/OfficerResponseDto.class
 com/infotech/entity/HistoryManagement.class
+com/infotech/exception/ApiError$ApiErrorBuilder.class
 com/infotech/repository/UserGuardAssignmentRepository.class
+com/infotech/dto/OfficerRequestDto.class
+com/infotech/exception/ApiError.class
 com/infotech/dto/AssignmentResponse.class
 com/infotech/dto/GuardLevelRequest.class
 com/infotech/repository/OfficerRepository.class
@@ -29,6 +36,7 @@ com/infotech/dto/Logindat.class
 com/infotech/dto/LoginResponse.class
 com/infotech/entity/LeaveRequest.class
 com/infotech/repository/HistoryManagementRepository.class
+com/infotech/exception/GlobalExceptionHandler.class
 com/infotech/controller/AssignmentController.class
 com/infotech/dto/AssignmentDetailDTO.class
 com/infotech/service/AdminService.class
@@ -46,6 +54,7 @@ com/infotech/dto/Accidentreq.class
 com/infotech/entity/UserGuardAssignment.class
 com/infotech/UserCategoryApiApplication.class
 com/infotech/controller/UserController.class
+com/infotech/exception/ResourceNotFoundException.class
 com/infotech/dto/NotificationRead.class
 com/infotech/entity/Officer.class
 com/infotech/service/UserService.class

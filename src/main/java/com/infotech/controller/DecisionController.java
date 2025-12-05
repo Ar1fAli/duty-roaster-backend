@@ -7,9 +7,11 @@ import com.infotech.dto.Accidentreq;
 import com.infotech.dto.LeaveReq;
 import com.infotech.entity.Accident;
 import com.infotech.entity.LeaveRequest;
+import com.infotech.entity.NotificationGuard;
 import com.infotech.entity.Officer;
 import com.infotech.repository.AccidentRepository;
 import com.infotech.repository.LeaveRequestRepository;
+import com.infotech.repository.NotificationGuardRepository;
 import com.infotech.service.AssignmentService;
 
 import org.springframework.http.ResponseEntity;
@@ -32,6 +34,7 @@ public class DecisionController {
     private final LeaveRequestRepository leaveRequestRepository;
     private final AccidentRepository accidentRepository;
     private final AssignmentService assignmentService;
+    private final NotificationGuardRepository notificationGuardRepository;
 
     @PostMapping("/decision")
     public LeaveRequest createCategorye(@RequestBody LeaveRequest req) {
@@ -60,7 +63,6 @@ public class DecisionController {
         leave.setStatus(req.getStatus());
         leave.setCurrent(true);
         leave.setResponseTime(LocalDateTime.now());
-        leaveRequestRepository.save(leave);
 
         // accepted statuses
         boolean isNowAccepted = "admin_accepted".equalsIgnoreCase(req.getStatus())
@@ -88,6 +90,14 @@ public class DecisionController {
             // 3) refill one guard for that VIP/category
             assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId);
         }
+
+        NotificationGuard notificationOfficer = new NotificationGuard();
+        notificationOfficer.setRead(false);
+        notificationOfficer.setOfficer(leave.getOfficer());
+        notificationOfficer.setMessage("Your Request is Accepted by the Authority check the status of your request");
+        notificationGuardRepository.save(notificationOfficer);
+
+        leaveRequestRepository.save(leave);
 
         return ResponseEntity.ok(leave);
     }
@@ -157,7 +167,6 @@ public class DecisionController {
         // update status + response time
         acc.setReq(req.getReq());
         acc.setResponseTime(LocalDateTime.now());
-        accidentRepository.save(acc);
 
         // accepted statuses
         boolean isNowAccepted = "admin_rejected".equalsIgnoreCase(req.getReq())
@@ -183,6 +192,13 @@ public class DecisionController {
             // 3) refill one guard for that VIP/category
             assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId);
         }
+        NotificationGuard notificationOfficer = new NotificationGuard();
+        notificationOfficer.setRead(false);
+        notificationOfficer.setOfficer(acc.getGuardData());
+        notificationOfficer.setMessage("Your Request is Accepted by the Authority check the status of your request");
+        notificationGuardRepository.save(notificationOfficer);
+
+        accidentRepository.save(acc);
 
         return ResponseEntity.ok(acc);
     }

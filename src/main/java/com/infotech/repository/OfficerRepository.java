@@ -17,6 +17,45 @@
 //
 // }
 
+// package com.infotech.repository;
+//
+// import java.util.List;
+// import java.util.Optional;
+//
+// import com.infotech.entity.Officer;
+//
+// import org.springframework.data.domain.Page;
+// import org.springframework.data.domain.Pageable;
+// import org.springframework.data.jpa.repository.JpaRepository;
+//
+// public interface OfficerRepository extends JpaRepository<Officer, Long> {
+//
+//     Optional<Officer> findByUsername(String username);
+//
+//     // For restore logic (soft-deleted officers)
+//     Optional<Officer> findByUsernameAndStatus(String username, String status);
+//
+//     Optional<Officer> findByEmailAndStatus(String email, String status);
+//
+//     Optional<Officer> findByContactnoAndStatus(Long contactno, String status);
+//
+//     // For list filters
+//     Page<Officer> findByStatus(String status, Pageable pageable);
+//
+//     Page<Officer> findByRank(String rank, Pageable pageable);
+//
+//     Page<Officer> findByStatusAndRank(String status, String rank, Pageable pageable);
+//
+// List<Officer> findByRank(String rank);
+//
+//     boolean existsByUsername(String username);
+//
+// }
+//
+//
+//
+//
+
 package com.infotech.repository;
 
 import java.util.List;
@@ -27,27 +66,43 @@ import com.infotech.entity.Officer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface OfficerRepository extends JpaRepository<Officer, Long> {
 
+    // Basic lookups
     Optional<Officer> findByUsername(String username);
 
-    // For restore logic (soft-deleted officers)
+    // Lookups that consider a specific status (used for restore / soft-delete
+    // logic)
     Optional<Officer> findByUsernameAndStatus(String username, String status);
 
     Optional<Officer> findByEmailAndStatus(String email, String status);
 
     Optional<Officer> findByContactnoAndStatus(Long contactno, String status);
 
-    // For list filters
+    // Lookups that ignore a given status (used by uniqueness checks to ignore
+    // soft-deleted rows)
+    Optional<Officer> findByUsernameAndStatusNot(String username, String status);
+
+    Optional<Officer> findByEmailAndStatusNot(String email, String status);
+
+    Optional<Officer> findByContactnoAndStatusNot(Long contactno, String status);
+
+    // Boolean-style existence helpers (optional but handy)
+    boolean existsByUsernameAndStatusNot(String username, String status);
+
+    boolean existsByEmailAndStatusNot(String email, String status);
+
+    boolean existsByContactnoAndStatusNot(Long contactno, String status);
+
+    // Paging / filtering used by service.getOfficers(...)
+    Page<Officer> findByStatusAndRank(String status, String rank, Pageable pageable);
+
     Page<Officer> findByStatus(String status, Pageable pageable);
 
     Page<Officer> findByRank(String rank, Pageable pageable);
 
-    Page<Officer> findByStatusAndRank(String status, String rank, Pageable pageable);
-
     List<Officer> findByRank(String rank);
-
-    boolean existsByUsername(String username);
-
 }

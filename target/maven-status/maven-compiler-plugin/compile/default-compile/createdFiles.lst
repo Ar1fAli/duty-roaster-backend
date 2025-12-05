@@ -11,7 +11,6 @@ com/infotech/repository/NotificationGuardRepository.class
 com/infotech/controller/OfficerController.class
 com/infotech/dto/AssignmentSummary.class
 com/infotech/service/OfficerService.class
-com/infotech/entity/EditedOfficer.class
 com/infotech/controller/EditedController.class
 com/infotech/repository/NotificationCategoryRepository.class
 com/infotech/service/AdminServiceImp.class
@@ -22,6 +21,7 @@ com/infotech/entity/HistoryManagement.class
 com/infotech/exception/ApiError$ApiErrorBuilder.class
 com/infotech/repository/UserGuardAssignmentRepository.class
 com/infotech/dto/OfficerRequestDto.class
+com/infotech/entity/Setting.class
 com/infotech/exception/ApiError.class
 com/infotech/dto/AssignmentResponse.class
 com/infotech/dto/GuardLevelRequest.class
@@ -40,8 +40,10 @@ com/infotech/exception/GlobalExceptionHandler.class
 com/infotech/controller/AssignmentController.class
 com/infotech/dto/AssignmentDetailDTO.class
 com/infotech/service/AdminService.class
+com/infotech/repository/SettingRepository.class
 com/infotech/repository/AccidentRepository.class
 com/infotech/service/AssignmentService.class
+com/infotech/controller/HistoryManagementController.class
 com/infotech/controller/AdminController.class
 com/infotech/service/JwtService.class
 com/infotech/entity/Accident.class
@@ -58,4 +60,3 @@ com/infotech/exception/ResourceNotFoundException.class
 com/infotech/dto/NotificationRead.class
 com/infotech/entity/Officer.class
 com/infotech/service/UserService.class
-com/infotech/repository/EditedOfficerRepository.class

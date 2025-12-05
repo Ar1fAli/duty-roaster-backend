@@ -94,6 +94,8 @@
 
 package com.infotech.controller;
 
+import java.util.List;
+
 import com.infotech.dto.OfficerRequestDto;
 import com.infotech.dto.OfficerResponseDto;
 import com.infotech.repository.LeaveRequestRepository;
@@ -154,24 +156,30 @@ public class OfficerController {
     }
 
     // CREATE or RESTORE
-    @PostMapping
-    public ResponseEntity<OfficerResponseDto> createOfficer(@RequestBody OfficerRequestDto officerDto) {
-        OfficerResponseDto saved = officerService.createOrRestoreOfficer(officerDto, getCurrentOperator());
+    @PostMapping("/{role}")
+    public ResponseEntity<OfficerResponseDto> createOfficer(@RequestBody OfficerRequestDto officerDto,
+            @PathVariable String role) {
+        OfficerResponseDto saved = officerService.createOrRestoreOfficer(officerDto, role);
         return ResponseEntity.ok(saved);
     }
 
     // UPDATE
-    @PutMapping("/{id}")
+    @PutMapping("/{id}/{role}")
     public ResponseEntity<OfficerResponseDto> updateOfficer(@PathVariable Long id,
-            @RequestBody OfficerRequestDto updatedDto) {
-        OfficerResponseDto updated = officerService.updateOfficer(id, updatedDto, getCurrentOperator());
+            @RequestBody OfficerRequestDto updatedDto, @PathVariable String role) {
+        OfficerResponseDto updated = officerService.updateOfficer(id, updatedDto, role);
         return ResponseEntity.ok(updated);
     }
 
     // SOFT DELETE
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOfficer(@PathVariable Long id) {
-        officerService.softDeleteOfficer(id, getCurrentOperator());
+    @DeleteMapping("/{id}/{role}")
+    public ResponseEntity<Void> deleteOfficer(@PathVariable Long id, @PathVariable String role) {
+        officerService.softDeleteOfficer(id, role);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/unique-ranks")
+    public ResponseEntity<List<String>> getUniqueRanks(@RequestParam String rank) {
+        return ResponseEntity.ok(officerService.totalRank(rank));
     }
 }

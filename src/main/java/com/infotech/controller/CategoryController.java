@@ -227,25 +227,25 @@ public class CategoryController {
     }
 
     // CREATE or RESTORE
-    @PostMapping
-    public ResponseEntity<Category> createCategory(@RequestBody Category newCategory) {
+    @PostMapping("/{operator}")
+    public ResponseEntity<Category> createCategory(@RequestBody Category newCategory, @PathVariable String operator) {
         System.out.println("category called");
-        Category saved = categoryService.createOrRestoreCategory(newCategory, getCurrentOperator());
+        Category saved = categoryService.createOrRestoreCategory(newCategory, operator);
         return ResponseEntity.ok(saved);
     }
 
     // UPDATE
-    @PutMapping("/{id}")
-    public ResponseEntity<Category> updateCategory(@PathVariable Long id,
+    @PutMapping("/{id}/{operator}")
+    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @PathVariable String operator,
             @RequestBody Category updatedCategory) {
-        Category updated = categoryService.updateCategory(id, updatedCategory, getCurrentOperator());
+        Category updated = categoryService.updateCategory(id, updatedCategory, operator);
         return ResponseEntity.ok(updated);
     }
 
     // SOFT DELETE
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
-        categoryService.softDeleteCategory(id, getCurrentOperator());
+    @DeleteMapping("/{id}/{operator}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id, @PathVariable String operator) {
+        categoryService.softDeleteCategory(id, operator);
         return ResponseEntity.noContent().build();
     }
 

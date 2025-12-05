@@ -1,11 +1,11 @@
 package com.infotech.repository;
 
-import com.infotech.entity.EditedOfficer;
+import com.infotech.entity.Setting;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface EditedOfficerRepository extends JpaRepository<EditedOfficer, Long> {
+public interface SettingRepository extends JpaRepository<Setting, Long> {
 
 }

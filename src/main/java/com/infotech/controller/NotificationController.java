@@ -1,11 +1,14 @@
 package com.infotech.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.infotech.entity.NotificationCategory;
 import com.infotech.entity.NotificationGuard;
+import com.infotech.entity.NotificationManagement;
 import com.infotech.repository.NotificationCategoryRepository;
 import com.infotech.repository.NotificationGuardRepository;
+import com.infotech.repository.NotificationManagementRepository;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -24,6 +27,7 @@ public class NotificationController {
 
     private final NotificationGuardRepository notificationGuardRepository;
     private final NotificationCategoryRepository notificationCategoryRepository;
+    private final NotificationManagementRepository notificationManagementRepository;
 
     @GetMapping("/guard/{id}")
     public ResponseEntity<List<NotificationGuard>> getOfficerNotification(@PathVariable Long id) {
@@ -49,6 +53,23 @@ public class NotificationController {
         NotificationCategory noti = notificationCategoryRepository.findById(id).orElseThrow();
         noti.setRead(true);
         notificationCategoryRepository.save(noti);
+        return ResponseEntity.ok("Notification Marked As Read");
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<?> NotificationSendAll() {
+        List<NotificationManagement> noti = notificationManagementRepository.findAll();
+        return ResponseEntity.ok(noti);
+    }
+
+    @GetMapping("/read/{id}/{role}")
+    public ResponseEntity<?> NotificationManagementRead(@PathVariable Long id, @PathVariable String role) {
+        NotificationManagement noti = notificationManagementRepository.findById(id).orElseThrow();
+        noti.setNotificationStatus(true);
+        noti.setNotificationReadTime(LocalDateTime.now());
+        noti.setNotificationReadBy(role);
+        notificationManagementRepository.save(noti);
+
         return ResponseEntity.ok("Notification Marked As Read");
     }
 

@@ -1,4 +1,5 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/UserCategoryApiApplication.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/config/CloudinaryConfig.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/config/DataSeeder.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/config/OfficerDataSeeder.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/config/SecurityConfig.java
@@ -10,6 +11,7 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/HistoryManagementController.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/NotificationController.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/OfficerController.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/ProfilePic.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/controller/UserController.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/Accidentreq.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/AssignmentDetailDTO.java
@@ -32,6 +34,7 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/LeaveRequest.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/NotificationCategory.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/NotificationGuard.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/NotificationManagement.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/Officer.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/OfficerName.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/Setting.java
@@ -49,6 +52,7 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/LeaveRequestRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/NotificationCategoryRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/NotificationGuardRepository.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/NotificationManagementRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/OfficerRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/SettingRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/UserGuardAssignmentRepository.java
@@ -57,6 +61,7 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/AdminServiceImp.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/AssignmentService.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/CategoryService.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/CloudinaryService.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/CustomUserDetailsService.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/JwtFilter.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/service/JwtService.java

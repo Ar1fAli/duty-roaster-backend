@@ -8,10 +8,12 @@ import com.infotech.dto.LeaveReq;
 import com.infotech.entity.Accident;
 import com.infotech.entity.LeaveRequest;
 import com.infotech.entity.NotificationGuard;
+import com.infotech.entity.NotificationManagement;
 import com.infotech.entity.Officer;
 import com.infotech.repository.AccidentRepository;
 import com.infotech.repository.LeaveRequestRepository;
 import com.infotech.repository.NotificationGuardRepository;
+import com.infotech.repository.NotificationManagementRepository;
 import com.infotech.service.AssignmentService;
 
 import org.springframework.http.ResponseEntity;
@@ -35,6 +37,7 @@ public class DecisionController {
     private final AccidentRepository accidentRepository;
     private final AssignmentService assignmentService;
     private final NotificationGuardRepository notificationGuardRepository;
+    private final NotificationManagementRepository notificationManagementRepo;
 
     @PostMapping("/decision")
     public LeaveRequest createCategorye(@RequestBody LeaveRequest req) {
@@ -43,6 +46,19 @@ public class DecisionController {
         System.out.println(req.getMessage());
         System.out.println(req.getOfficer());
         req.setCurrent(true);
+
+        NotificationManagement notificationManagement = new NotificationManagement();
+
+        notificationManagement.setNotificationSender("GUARD");
+        notificationManagement.setNotificationSenderId(req.getOfficer().getId());
+        notificationManagement.setNotificationMessage("Guard is Decided For Duty Please Check Status");
+        notificationManagement.setNotificationStatus(false);
+        notificationManagement.setNotificationSenderName(req.getOfficer().getName());
+
+        notificationManagement.setNotificationAssignTime(LocalDateTime.now());
+
+        notificationManagementRepo.save(notificationManagement);
+
         req.setRequestTime(LocalDateTime.now());
 
         return leaveRequestRepository.save(req);
@@ -107,6 +123,20 @@ public class DecisionController {
         System.out.println(req.getReq());
         System.out.println(req.getMessage());
         System.out.println(req.getGuardData());
+        req.setRequestTime(LocalDateTime.now());
+
+        NotificationManagement notificationManagement = new NotificationManagement();
+
+        notificationManagement.setNotificationSender("GUARD");
+        notificationManagement.setNotificationSenderId(req.getGuardData().getId());
+        notificationManagement.setNotificationMessage("Guard is Decided For Duty Please Check Status");
+        notificationManagement.setNotificationStatus(false);
+        notificationManagement.setNotificationSenderName(req.getGuardData().getName());
+
+        notificationManagement.setNotificationAssignTime(LocalDateTime.now());
+
+        notificationManagementRepo.save(notificationManagement);
+
         req.setRequestTime(LocalDateTime.now());
 
         return accidentRepository.save(req);

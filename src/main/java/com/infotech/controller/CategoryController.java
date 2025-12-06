@@ -227,18 +227,18 @@ public class CategoryController {
     }
 
     // CREATE or RESTORE
-    @PostMapping("/{operator}")
-    public ResponseEntity<Category> createCategory(@RequestBody Category newCategory, @PathVariable String operator) {
+    @PostMapping("/{role}")
+    public ResponseEntity<Category> createCategory(@RequestBody Category newCategory, @PathVariable String role) {
         System.out.println("category called");
-        Category saved = categoryService.createOrRestoreCategory(newCategory, operator);
+        Category saved = categoryService.createOrRestoreCategory(newCategory, role);
         return ResponseEntity.ok(saved);
     }
 
     // UPDATE
-    @PutMapping("/{id}/{operator}")
-    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @PathVariable String operator,
+    @PutMapping("/{id}/{role}")
+    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @PathVariable String role,
             @RequestBody Category updatedCategory) {
-        Category updated = categoryService.updateCategory(id, updatedCategory, operator);
+        Category updated = categoryService.updateCategory(id, updatedCategory, role);
         return ResponseEntity.ok(updated);
     }
 

@@ -15,6 +15,7 @@ com/infotech/controller/EditedController.class
 com/infotech/repository/NotificationCategoryRepository.class
 com/infotech/service/AdminServiceImp.class
 com/infotech/dto/LeaveReq.class
+com/infotech/controller/ProfilePic.class
 com/infotech/exception/BadRequestException.class
 com/infotech/dto/OfficerResponseDto.class
 com/infotech/entity/HistoryManagement.class
@@ -28,6 +29,7 @@ com/infotech/dto/GuardLevelRequest.class
 com/infotech/repository/OfficerRepository.class
 com/infotech/entity/OfficerName.class
 com/infotech/dto/GuardAssignmentRequest.class
+com/infotech/service/CloudinaryService.class
 com/infotech/entity/NotificationCategory.class
 com/infotech/dto/OfficerDuty.class
 com/infotech/entity/UserEntity.class
@@ -36,6 +38,7 @@ com/infotech/dto/Logindat.class
 com/infotech/dto/LoginResponse.class
 com/infotech/entity/LeaveRequest.class
 com/infotech/repository/HistoryManagementRepository.class
+com/infotech/config/CloudinaryConfig.class
 com/infotech/exception/GlobalExceptionHandler.class
 com/infotech/controller/AssignmentController.class
 com/infotech/dto/AssignmentDetailDTO.class
@@ -45,6 +48,7 @@ com/infotech/repository/AccidentRepository.class
 com/infotech/service/AssignmentService.class
 com/infotech/controller/HistoryManagementController.class
 com/infotech/controller/AdminController.class
+com/infotech/repository/NotificationManagementRepository.class
 com/infotech/service/JwtService.class
 com/infotech/entity/Accident.class
 com/infotech/entity/DataItem.class
@@ -59,4 +63,5 @@ com/infotech/controller/UserController.class
 com/infotech/exception/ResourceNotFoundException.class
 com/infotech/dto/NotificationRead.class
 com/infotech/entity/Officer.class
+com/infotech/entity/NotificationManagement.class
 com/infotech/service/UserService.class

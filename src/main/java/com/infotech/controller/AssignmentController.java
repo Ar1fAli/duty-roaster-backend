@@ -34,6 +34,7 @@ public class AssignmentController {
                         @RequestBody GuardAssignmentRequest request) {
 
                 AssignmentResponse response = assignmentService.assignGuardsAutomatically(request);
+
                 return ResponseEntity.ok(response);
         }
 

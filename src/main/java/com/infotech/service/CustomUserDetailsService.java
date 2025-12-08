@@ -82,7 +82,8 @@ public class CustomUserDetailsService implements UserDetailsService {
             return buildUser(
                     admin.getAdminUsername(),
                     admin.getAdminPassword(), // BCrypt hash
-                    admin.getRole()// or admin.getRole()
+                    "ADMIN"
+            // admin.getRole()// or admin.getRole()
             );
         }
 

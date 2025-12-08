@@ -1,5 +1,7 @@
 package com.infotech.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -29,6 +31,7 @@ public class Officer {
     private String email;
     private String rank;
     private String status;
+    private LocalDateTime createdTime;
     // private String reqstatus;
     // private String reasonmes;
 

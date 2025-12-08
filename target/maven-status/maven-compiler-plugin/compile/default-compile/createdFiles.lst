@@ -16,12 +16,15 @@ com/infotech/repository/NotificationCategoryRepository.class
 com/infotech/service/AdminServiceImp.class
 com/infotech/dto/LeaveReq.class
 com/infotech/controller/ProfilePic.class
+com/infotech/dto/VipProfileResponse.class
 com/infotech/exception/BadRequestException.class
 com/infotech/dto/OfficerResponseDto.class
 com/infotech/entity/HistoryManagement.class
 com/infotech/exception/ApiError$ApiErrorBuilder.class
+com/infotech/repository/ProfilePictureRepository.class
 com/infotech/repository/UserGuardAssignmentRepository.class
 com/infotech/dto/OfficerRequestDto.class
+com/infotech/entity/ProfilePicture.class
 com/infotech/entity/Setting.class
 com/infotech/exception/ApiError.class
 com/infotech/dto/AssignmentResponse.class

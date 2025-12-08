@@ -370,6 +370,7 @@ public class CategoryService {
         newCategory.setPassword(encoder.encode(newCategory.getPassword()));
 
         Category saved = categoryRepository.save(newCategory);
+        System.out.println(saved + "  category created ");
 
         // Log CREATE
         logHistory("CREATE", "VIP", saved.getId(), operatedBy,
@@ -545,6 +546,7 @@ public class CategoryService {
         history.setFieldName(fieldName);
         history.setOldValue(oldValue);
         history.setNewValue(newValue);
+        System.out.println(history + " log history created");
 
         historyManagementRepository.save(history);
     }

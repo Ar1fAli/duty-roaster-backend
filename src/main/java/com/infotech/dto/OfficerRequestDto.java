@@ -1,5 +1,7 @@
 package com.infotech.dto;
 
+import java.time.LocalDateTime;
+
 import lombok.Data;
 
 @Data
@@ -13,4 +15,5 @@ public class OfficerRequestDto {
     private String status; // optional on create; default Active in service
     private Long experience;
     private Long contactno;
+    private LocalDateTime createdTime;
 }

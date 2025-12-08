@@ -94,6 +94,7 @@
 
 package com.infotech.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.infotech.dto.OfficerRequestDto;
@@ -118,8 +119,8 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/officer")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class OfficerController {
 
     private final OfficerService officerService;
@@ -156,9 +157,10 @@ public class OfficerController {
     }
 
     // CREATE or RESTORE
-    @PostMapping("/{role}")
+    @PostMapping("/register/{role}")
     public ResponseEntity<OfficerResponseDto> createOfficer(@RequestBody OfficerRequestDto officerDto,
             @PathVariable String role) {
+        officerDto.setCreatedTime(LocalDateTime.now());
         OfficerResponseDto saved = officerService.createOrRestoreOfficer(officerDto, role);
         return ResponseEntity.ok(saved);
     }
@@ -167,6 +169,7 @@ public class OfficerController {
     @PutMapping("/{id}/{role}")
     public ResponseEntity<OfficerResponseDto> updateOfficer(@PathVariable Long id,
             @RequestBody OfficerRequestDto updatedDto, @PathVariable String role) {
+        // updatedDto.setCreatedTime(LocalDateTime.now());
         OfficerResponseDto updated = officerService.updateOfficer(id, updatedDto, role);
         return ResponseEntity.ok(updated);
     }

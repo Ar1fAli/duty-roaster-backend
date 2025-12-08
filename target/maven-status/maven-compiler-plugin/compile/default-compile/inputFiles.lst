@@ -26,6 +26,7 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/OfficerDuty.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/OfficerRequestDto.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/OfficerResponseDto.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/dto/VipProfileResponse.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/Accident.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/AdminEntity.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/Category.java
@@ -37,6 +38,7 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/NotificationManagement.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/Officer.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/OfficerName.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/ProfilePicture.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/Setting.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/UserEntity.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/entity/UserGuardAssignment.java
@@ -54,6 +56,7 @@
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/NotificationGuardRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/NotificationManagementRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/OfficerRepository.java
+/home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/ProfilePictureRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/SettingRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/UserGuardAssignmentRepository.java
 /home/arif/project/infotech/db-backendcp/src/main/java/com/infotech/repository/UserRepository.java

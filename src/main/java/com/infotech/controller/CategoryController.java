@@ -183,9 +183,10 @@
 
 package com.infotech.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
+import com.infotech.dto.VipProfileResponse;
 import com.infotech.entity.Category;
 import com.infotech.repository.CategoryRepository;
 import com.infotech.service.CategoryService;
@@ -227,9 +228,10 @@ public class CategoryController {
     }
 
     // CREATE or RESTORE
-    @PostMapping("/{role}")
+    @PostMapping("/register/{role}")
     public ResponseEntity<Category> createCategory(@RequestBody Category newCategory, @PathVariable String role) {
         System.out.println("category called");
+        newCategory.setCreatedTime(LocalDateTime.now());
         Category saved = categoryService.createOrRestoreCategory(newCategory, role);
         return ResponseEntity.ok(saved);
     }
@@ -238,6 +240,7 @@ public class CategoryController {
     @PutMapping("/{id}/{role}")
     public ResponseEntity<Category> updateCategory(@PathVariable Long id, @PathVariable String role,
             @RequestBody Category updatedCategory) {
+        // updatedCategory.setCreatedTime(LocalDateTime.now());
         Category updated = categoryService.updateCategory(id, updatedCategory, role);
         return ResponseEntity.ok(updated);
     }
@@ -250,8 +253,17 @@ public class CategoryController {
     }
 
     @GetMapping("/profile")
-    public Optional<Category> getAdmin(@RequestParam String username) {
-        Optional<Category> admindata = categoryRepository.findByUsername(username);
-        return admindata;
+    public VipProfileResponse getAdmin(@RequestParam String username) {
+        Category admindata = categoryRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Vip data not found"));
+        VipProfileResponse res = new VipProfileResponse();
+        res.setId(admindata.getId());
+        res.setName(admindata.getName());
+        res.setEmail(admindata.getEmail());
+        res.setUsername(admindata.getUsername());
+        res.setStatus(admindata.getStatus());
+        res.setContactno(admindata.getContactno());
+        res.setUrl(admindata.getPic().getUrl());
+        return res;
     }
 }

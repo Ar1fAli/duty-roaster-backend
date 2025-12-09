@@ -1,10 +1,11 @@
 package com.infotech.controller;
 
-import java.util.Optional;
-
+import com.infotech.dto.UserProfileResponse;
 import com.infotech.entity.UserEntity;
 import com.infotech.repository.UserRepository;
+import com.infotech.service.UserService;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,35 +36,41 @@ public class UserController {
     }
 
     @GetMapping("/profile")
-    public Optional<UserEntity> getAdmin(@RequestParam String username) {
-        Optional<UserEntity> admindata = userRepository.findByUsername(username);
-        return admindata;
+    public UserProfileResponse getAdmin(@RequestParam String username) {
+        UserEntity admindata = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("user not found "));
+        UserProfileResponse profile = new UserProfileResponse();
+        profile.setId(admindata.getId());
+        profile.setName(admindata.getName());
+        profile.setUsername(admindata.getUsername());
+        profile.setEmail(admindata.getEmail());
+        profile.setContactno(admindata.getContactno());
+        profile.setStatus(admindata.getStatus());
+        if (admindata.getPic() != null) {
+            profile.setUrl(admindata.getPic().getUrl());
+
+        }
+
+        return profile;
     }
 
-    @PutMapping("/{id}")
-    public UserEntity updateCategory(@PathVariable Long id, @RequestBody UserEntity updateduser) {
-        return userRepository.findById(id).map(userEnt -> {
-            userEnt.setId(updateduser.getId());
-            userEnt.setName(updateduser.getName());
-            userEnt.setEmail(updateduser.getEmail());
-            userEnt.setStatus(updateduser.getStatus());
-            userEnt.setContactno(updateduser.getContactno());
-            userEnt.setUsername(updateduser.getUsername());
-            userEnt.setPassword(encoder.encode(updateduser.getPassword()));
+    private final UserService userService;
 
-            System.out.println("updated category p" + updateduser.getPassword());
+    @PutMapping("/{id}/{role}")
+    public ResponseEntity<UserEntity> updateUser(
+            @PathVariable Long id,
+            @RequestBody UserEntity updatedUser, @PathVariable String role) {
 
-            // Clear existing items (important for orphanRemoval = true)
-            // category.getDataItems().clear();
+        // You can also take operatedBy from SecurityContext instead of hardcoding
+        // String operatedBy = "SYSTEM"; // or current logged-in username
 
-            // Add updated items with proper category assignment
-            // for (DataItem item : updatedCategory.getDataItems()) {
-            // item.setCategory(category);
-            // category.getDataItems().add(item);
-            // }
-
-            return userRepository.save(userEnt);
-        }).orElseThrow(() -> new RuntimeException("Category not found with id " + id));
+        try {
+            UserEntity saved = userService.updateUser(id, updatedUser, role);
+            return ResponseEntity.ok(saved);
+        } catch (RuntimeException ex) {
+            // for "User not found" etc
+            return ResponseEntity.notFound().build();
+        }
     }
 
 }

@@ -21,4 +21,8 @@ public class ProfilePicture {
 
     private LocalDateTime updateTime;
 
+    private String updatedby;
+
+    private Long updaterId;
+
 }

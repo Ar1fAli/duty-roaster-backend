@@ -3,16 +3,18 @@ package com.infotech.dto;
 import lombok.Data;
 
 @Data
-public class OfficerResponseDto {
+public class GuardProfileResponse {
 
     private Long id;
 
     private String name;
     private String username;
     private String email;
-    private String rank;
     private String status;
     private String url;
-    private Long experience;
+    // private String reqstatus;
+    // private String reasonmes;
+
     private Long contactno;
+
 }

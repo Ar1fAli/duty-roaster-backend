@@ -14,5 +14,7 @@ public interface AdminService {
 
     Optional<AdminEntity> getAdmin(String userName);
 
-    AdminEntity updateCategory(Long id, AdminEntity admindat);
+    // AdminEntity updateCategory(Long id, AdminEntity admindat);
+
+    AdminEntity updateCategory(Long id, AdminEntity admindat, String operatedBy);
 }

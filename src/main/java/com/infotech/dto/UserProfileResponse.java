@@ -3,16 +3,15 @@ package com.infotech.dto;
 import lombok.Data;
 
 @Data
-public class VipProfileResponse {
+public class UserProfileResponse {
+
     private Long id;
 
-    private Long contactno;
-
+    private String username;
     private String name;
     private String email;
-    private String username;
+    private String contactno;
     private String status;
-
     private String url;
 
 }

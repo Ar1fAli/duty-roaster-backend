@@ -97,9 +97,12 @@ package com.infotech.controller;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.infotech.dto.GuardProfileResponse;
 import com.infotech.dto.OfficerRequestDto;
 import com.infotech.dto.OfficerResponseDto;
+import com.infotech.entity.Officer;
 import com.infotech.repository.LeaveRequestRepository;
+import com.infotech.repository.OfficerRepository;
 import com.infotech.service.OfficerService;
 
 import org.springframework.data.domain.Page;
@@ -125,6 +128,7 @@ public class OfficerController {
 
     private final OfficerService officerService;
     private final LeaveRequestRepository leaveRequestRepository; // keep if used elsewhere
+    private final OfficerRepository officerRepository;
 
     // In real app, read from SecurityContext
     private String getCurrentOperator() {
@@ -144,10 +148,21 @@ public class OfficerController {
 
     // GET by username (profile)
     @GetMapping("/profile")
-    public ResponseEntity<OfficerResponseDto> getOfficer(@RequestParam String username) {
-        return officerService.getByUsername(username)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public GuardProfileResponse getOfficer(@RequestParam String username) {
+        Officer offi = officerRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("user name not found"));
+        GuardProfileResponse res = new GuardProfileResponse();
+        res.setId(offi.getId());
+        res.setUsername(offi.getUsername());
+        res.setName(offi.getName());
+        res.setEmail(offi.getEmail());
+        res.setStatus(offi.getStatus());
+        res.setContactno(offi.getContactno());
+        if (offi.getPic() != null) {
+            res.setUrl(offi.getPic().getUrl());
+        }
+        return res;
+
     }
 
     // GET by id (optional)

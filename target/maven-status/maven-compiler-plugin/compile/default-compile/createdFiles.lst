@@ -19,6 +19,7 @@ com/infotech/controller/ProfilePic.class
 com/infotech/dto/VipProfileResponse.class
 com/infotech/exception/BadRequestException.class
 com/infotech/dto/OfficerResponseDto.class
+com/infotech/entity/AssignmentValue.class
 com/infotech/entity/HistoryManagement.class
 com/infotech/exception/ApiError$ApiErrorBuilder.class
 com/infotech/repository/ProfilePictureRepository.class
@@ -42,6 +43,8 @@ com/infotech/dto/LoginResponse.class
 com/infotech/entity/LeaveRequest.class
 com/infotech/repository/HistoryManagementRepository.class
 com/infotech/config/CloudinaryConfig.class
+com/infotech/dto/GuardProfileResponse.class
+com/infotech/repository/AssignmentValueRepository.class
 com/infotech/exception/GlobalExceptionHandler.class
 com/infotech/controller/AssignmentController.class
 com/infotech/dto/AssignmentDetailDTO.class
@@ -49,8 +52,10 @@ com/infotech/service/AdminService.class
 com/infotech/repository/SettingRepository.class
 com/infotech/repository/AccidentRepository.class
 com/infotech/service/AssignmentService.class
+com/infotech/controller/SettingController.class
 com/infotech/controller/HistoryManagementController.class
 com/infotech/controller/AdminController.class
+com/infotech/entity/SecurityType.class
 com/infotech/repository/NotificationManagementRepository.class
 com/infotech/service/JwtService.class
 com/infotech/entity/Accident.class
@@ -59,10 +64,14 @@ com/infotech/controller/NotificationController.class
 com/infotech/repository/CategoryRepository.class
 com/infotech/repository/UserRepository.class
 com/infotech/service/JwtFilter.class
+com/infotech/repository/SecurityTypeRepository.class
 com/infotech/dto/Accidentreq.class
 com/infotech/entity/UserGuardAssignment.class
 com/infotech/UserCategoryApiApplication.class
+com/infotech/dto/AdminResponseProfile.class
 com/infotech/controller/UserController.class
+com/infotech/dto/UserProfileResponse.class
+com/infotech/entity/AssignmentValue$AssignmentValueBuilder.class
 com/infotech/exception/ResourceNotFoundException.class
 com/infotech/dto/NotificationRead.class
 com/infotech/entity/Officer.class

@@ -263,7 +263,11 @@ public class CategoryController {
         res.setUsername(admindata.getUsername());
         res.setStatus(admindata.getStatus());
         res.setContactno(admindata.getContactno());
-        res.setUrl(admindata.getPic().getUrl());
+        System.out.println(admindata.getPic() + "pic id value");
+        if (admindata.getPic() != null) {
+            res.setUrl(admindata.getPic().getUrl());
+            System.out.println(admindata.getPic().getUrl() + "pic Url value ");
+        }
         return res;
     }
 }

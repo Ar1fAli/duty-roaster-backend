@@ -406,6 +406,7 @@ public class OfficerService {
     o.setExperience(dto.getExperience());
     o.setContactno(dto.getContactno());
     o.setPassword(dto.getPassword());
+
     return o;
   }
 

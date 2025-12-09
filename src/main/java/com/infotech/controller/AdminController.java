@@ -1,5 +1,6 @@
 package com.infotech.controller;
 
+import com.infotech.dto.AdminResponseProfile;
 import com.infotech.dto.LoginResponse;
 import com.infotech.dto.Logindat;
 import com.infotech.entity.AdminEntity;
@@ -39,11 +40,22 @@ public class AdminController {
     // }@RequestParam String userName
 
     @GetMapping("/profile")
-    public ResponseEntity<AdminEntity> getAdmin(@RequestParam String userName) {
+    public ResponseEntity<AdminResponseProfile> getAdmin(@RequestParam String userName) {
         // String userName = authentication.getName(); // or from principal
         AdminEntity admin = adminService.getAdmin(userName)
                 .orElseThrow(() -> new UsernameNotFoundException("Admin not found"));
-        return ResponseEntity.ok(admin);
+        AdminResponseProfile profile = new AdminResponseProfile();
+        profile.setId(admin.getId());
+        profile.setAdminName(admin.getAdminName());
+        profile.setAdminUsername(admin.getAdminUsername());
+        profile.setAdminEmail(admin.getAdminEmail());
+        profile.setContactNo(admin.getContactNo());
+        profile.setRole(admin.getRole());
+        if (admin.getPic() != null) {
+            System.out.println("null invocked");
+            profile.setUrl(admin.getPic().getUrl());
+        }
+        return ResponseEntity.ok(profile);
     }
 
     @PostMapping("/login")
@@ -51,9 +63,10 @@ public class AdminController {
         return adminService.login(adminEntity);
     }
 
-    @PostMapping("/update/{id}")
-    public AdminEntity updateCategory(@PathVariable Long id, @RequestBody AdminEntity admindat) {
+    @PostMapping("/update/{id}/{role}")
+    public AdminEntity updateCategory(@PathVariable Long id, @RequestBody AdminEntity admindat,
+            @PathVariable String role) {
 
-        return adminService.updateCategory(id, admindat);
+        return adminService.updateCategory(id, admindat, role);
     }
 }

@@ -136,12 +136,15 @@ import java.util.function.BiConsumer;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
+import com.infotech.dto.AdminRequestDto;
 import com.infotech.dto.LoginResponse;
 import com.infotech.dto.Logindat;
 import com.infotech.entity.AdminEntity;
 import com.infotech.entity.HistoryManagement;
+import com.infotech.entity.UserData;
 import com.infotech.repository.AdminRepsitory;
 import com.infotech.repository.HistoryManagementRepository;
+import com.infotech.repository.UserDataRepository;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -156,188 +159,212 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class AdminServiceImp implements AdminService {
 
-    private final AdminRepsitory adminRepsitory;
-    private final PasswordEncoder encoder;
-    private final AuthenticationManager authManager;
-    private final JwtService jwtService;
+  private final AdminRepsitory adminRepsitory;
+  private final PasswordEncoder encoder;
+  private final AuthenticationManager authManager;
+  private final JwtService jwtService;
+  private final UserDataRepository userDataRepository;
 
-    // NEW: inject history repo
-    private final HistoryManagementRepository historyManagementRepository;
+  // NEW: inject history repo
+  private final HistoryManagementRepository historyManagementRepository;
 
-    @Override
-    public String register(AdminEntity adminEntity) {
-        System.out.println(adminEntity.getAdminPassword());
-        if (adminRepsitory.findByAdminUsername(adminEntity.getAdminUsername()).isPresent())
-            return "Username already exists";
+  @Override
+  public String register(AdminRequestDto adminEntity) {
 
-        adminEntity.setAdminPassword(encoder.encode(adminEntity.getAdminPassword()));
-        adminRepsitory.save(adminEntity);
-        return "User registered successfully";
+    UserData userd = new UserData();
+    AdminEntity admin = new AdminEntity();
+    if (adminEntity.getAdminName() != null && !adminEntity.getAdminName().isBlank()) {
+      admin.setAdminName(adminEntity.getAdminName());
+    }
+    if (adminEntity.getAdminEmail() != null && !adminEntity.getAdminEmail().isBlank()) {
+      admin.setAdminEmail(adminEntity.getAdminEmail());
+    }
+    if (adminEntity.getContactNo() != null) {
+      admin.setContactNo(adminEntity.getContactNo());
+    }
+    if (adminEntity.getRole() != null && !adminEntity.getRole().isBlank()) {
+      admin.setRole(adminEntity.getRole());
+
     }
 
-    @Override
-    public Optional<AdminEntity> getAdmin(String userName) {
-        Optional<AdminEntity> admindata = adminRepsitory.findByAdminUsername(userName);
-        return admindata;
+    // System.out.println("Admin Entity: " + adminEntity);
+    if (userDataRepository.findByUsername(adminEntity.getAdminUsername()).isPresent())
+      return "Username already exists";
+    if (adminRepsitory.findByAdminEmail(adminEntity.getAdminEmail()).isPresent())
+      return "Email already exists";
+    userd.setPassword(encoder.encode(adminEntity.getAdminPassword()));
+    userd.setUsername(adminEntity.getAdminUsername());
+
+    userd = userDataRepository.save(userd);
+
+    admin.setUserData(userd);
+    adminRepsitory.save(admin);
+    return "User registered successfully";
+  }
+
+  @Override
+  public Optional<AdminEntity> getAdmin(String userName) {
+    Optional<AdminEntity> admindata = adminRepsitory.findByAdminUsername(userName);
+    return admindata;
+  }
+
+  @Override
+  public LoginResponse login(Logindat loginDto) {
+    try {
+      System.out.println(loginDto.getUsername());
+      System.out.println(loginDto.getPassword());
+
+      Authentication authentication = authManager.authenticate(
+          new UsernamePasswordAuthenticationToken(
+              loginDto.getUsername(),
+              loginDto.getPassword()));
+
+      System.out.println("working");
+
+      String fullRole = authentication.getAuthorities()
+          .stream()
+          .findFirst()
+          .orElseThrow(() -> new RuntimeException("No role found"))
+          .getAuthority(); // e.g. ROLE_ADMIN
+
+      String role = fullRole.replace("ROLE_", ""); // ADMIN / GUARD / VIP
+
+      LoginResponse res = new LoginResponse();
+      res.setData(jwtService.generateToken(loginDto.getUsername()));
+      res.setRole(role);
+
+      return res;
+
+    } catch (Exception e) {
+      System.out.println("Login failed: " + e.getMessage());
+      throw new RuntimeException("Invalid username or password");
     }
+  }
 
-    @Override
-    public LoginResponse login(Logindat loginDto) {
-        try {
-            System.out.println(loginDto.getUsername());
-            System.out.println(loginDto.getPassword());
+  // ✅ UPDATED: history + validation + null-safe update
+  public AdminEntity updateCategory(Long id, AdminEntity admindat, String role) {
 
-            Authentication authentication = authManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginDto.getUsername(),
-                            loginDto.getPassword()));
+    return adminRepsitory.findById(id).map(admin -> {
 
-            System.out.println("working");
+      // who is performing the operation? (you can adjust this later)
+      String operatedBy = role; // or "SYSTEM" or from token
 
-            String fullRole = authentication.getAuthorities()
-                    .stream()
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("No role found"))
-                    .getAuthority(); // e.g. ROLE_ADMIN
+      // --- uniqueness check for username (if changed) ---
+      if (admindat.getAdminUsername() != null && !admindat.getAdminUsername().isBlank()) {
+        adminRepsitory.findByAdminUsername(admindat.getAdminUsername())
+            .filter(existing -> !Objects.equals(existing.getId(), id))
+            .ifPresent(existing -> {
+              // this will be caught in controller and sent as 400
+              throw new IllegalStateException("Username already exists");
+            });
+      }
 
-            String role = fullRole.replace("ROLE_", ""); // ADMIN / GUARD / VIP
+      List<HistoryManagement> historyEntries = new ArrayList<>();
 
-            LoginResponse res = new LoginResponse();
-            res.setData(jwtService.generateToken(loginDto.getUsername()));
-            res.setRole(role);
+      BiConsumer<String, Object[]> logChange = (fieldName, values) -> {
+        Object oldVal = values[0];
+        Object newVal = values[1];
 
-            return res;
-
-        } catch (Exception e) {
-            System.out.println("Login failed: " + e.getMessage());
-            throw new RuntimeException("Invalid username or password");
+        if (Objects.equals(oldVal, newVal)) {
+          return; // no change, no history
         }
-    }
 
-    // ✅ UPDATED: history + validation + null-safe update
-    public AdminEntity updateCategory(Long id, AdminEntity admindat, String role) {
+        HistoryManagement history = new HistoryManagement();
+        history.setTime(LocalDateTime.now());
+        history.setOperationType("UPDATE");
+        history.setOperatedBy(operatedBy);
+        history.setOperatorId(id);
+        history.setEntityName("Admin");
+        history.setFieldName(fieldName);
+        history.setOldValue(oldVal == null ? null : oldVal.toString());
+        history.setNewValue(newVal == null ? null : newVal.toString());
 
-        return adminRepsitory.findById(id).map(admin -> {
+        historyEntries.add(history);
+      };
 
-            // who is performing the operation? (you can adjust this later)
-            String operatedBy = role; // or "SYSTEM" or from token
+      // ❌ DO NOT override ID from request
+      // admin.setId(admindat.getId());
 
-            // --- uniqueness check for username (if changed) ---
-            if (admindat.getAdminUsername() != null && !admindat.getAdminUsername().isBlank()) {
-                adminRepsitory.findByAdminUsername(admindat.getAdminUsername())
-                        .filter(existing -> !Objects.equals(existing.getId(), id))
-                        .ifPresent(existing -> {
-                            // this will be caught in controller and sent as 400
-                            throw new IllegalStateException("Username already exists");
-                        });
-            }
+      // ============== NULL-SAFE FIELD UPDATES + HISTORY ==============
 
-            List<HistoryManagement> historyEntries = new ArrayList<>();
+      // name
+      if (admindat.getAdminName() != null && !admindat.getAdminName().isBlank()) {
+        logChange.accept("adminName", new Object[] {
+            admin.getAdminName(),
+            admindat.getAdminName()
+        });
+        admin.setAdminName(admindat.getAdminName());
+      }
 
-            BiConsumer<String, Object[]> logChange = (fieldName, values) -> {
-                Object oldVal = values[0];
-                Object newVal = values[1];
+      // username
+      if (admindat.getAdminUsername() != null && !admindat.getAdminUsername().isBlank()) {
+        logChange.accept("adminUsername", new Object[] {
+            admin.getAdminUsername(),
+            admindat.getAdminUsername()
+        });
+        admin.setAdminUsername(admindat.getAdminUsername());
+      }
 
-                if (Objects.equals(oldVal, newVal)) {
-                    return; // no change, no history
-                }
+      // email
+      if (admindat.getAdminEmail() != null && !admindat.getAdminEmail().isBlank()) {
+        logChange.accept("adminEmail", new Object[] {
+            admin.getAdminEmail(),
+            admindat.getAdminEmail()
+        });
+        admin.setAdminEmail(admindat.getAdminEmail());
+      }
 
-                HistoryManagement history = new HistoryManagement();
-                history.setTime(LocalDateTime.now());
-                history.setOperationType("UPDATE");
-                history.setOperatedBy(operatedBy);
-                history.setOperatorId(id);
-                history.setEntityName("Admin");
-                history.setFieldName(fieldName);
-                history.setOldValue(oldVal == null ? null : oldVal.toString());
-                history.setNewValue(newVal == null ? null : newVal.toString());
+      // contactNo (no blank check if it's a number, just null check)
+      if (admindat.getContactNo() != null) {
+        logChange.accept("contactNo", new Object[] {
+            admin.getContactNo(),
+            admindat.getContactNo()
+        });
+        admin.setContactNo(admindat.getContactNo());
+      }
 
-                historyEntries.add(history);
-            };
+      // role
+      if (admindat.getRole() != null && !admindat.getRole().isBlank()) {
+        logChange.accept("role", new Object[] {
+            admin.getRole(),
+            admindat.getRole()
+        });
+        admin.setRole(admindat.getRole());
+      }
 
-            // ❌ DO NOT override ID from request
-            // admin.setId(admindat.getId());
+      // ============== PASSWORD (special) ==============
+      String newRawPassword = admindat.getAdminPassword();
+      if (newRawPassword != null && !newRawPassword.isBlank()) {
 
-            // ============== NULL-SAFE FIELD UPDATES + HISTORY ==============
+        boolean sameAsOld = encoder.matches(newRawPassword, admin.getAdminPassword());
 
-            // name
-            if (admindat.getAdminName() != null && !admindat.getAdminName().isBlank()) {
-                logChange.accept("adminName", new Object[] {
-                        admin.getAdminName(),
-                        admindat.getAdminName()
-                });
-                admin.setAdminName(admindat.getAdminName());
-            }
+        if (!sameAsOld) {
+          // don't log real password
+          HistoryManagement history = new HistoryManagement();
+          history.setTime(LocalDateTime.now());
+          history.setOperationType("UPDATE");
+          history.setOperatedBy(operatedBy);
+          history.setOperatorId(id);
+          history.setEntityName("Admin");
+          history.setFieldName("adminPassword");
+          history.setOldValue(null);
+          history.setNewValue("UPDATED");
 
-            // username
-            if (admindat.getAdminUsername() != null && !admindat.getAdminUsername().isBlank()) {
-                logChange.accept("adminUsername", new Object[] {
-                        admin.getAdminUsername(),
-                        admindat.getAdminUsername()
-                });
-                admin.setAdminUsername(admindat.getAdminUsername());
-            }
+          historyEntries.add(history);
 
-            // email
-            if (admindat.getAdminEmail() != null && !admindat.getAdminEmail().isBlank()) {
-                logChange.accept("adminEmail", new Object[] {
-                        admin.getAdminEmail(),
-                        admindat.getAdminEmail()
-                });
-                admin.setAdminEmail(admindat.getAdminEmail());
-            }
+          admin.setAdminPassword(encoder.encode(newRawPassword));
+        }
+      }
 
-            // contactNo (no blank check if it's a number, just null check)
-            if (admindat.getContactNo() != null) {
-                logChange.accept("contactNo", new Object[] {
-                        admin.getContactNo(),
-                        admindat.getContactNo()
-                });
-                admin.setContactNo(admindat.getContactNo());
-            }
+      AdminEntity saved = adminRepsitory.save(admin);
 
-            // role
-            if (admindat.getRole() != null && !admindat.getRole().isBlank()) {
-                logChange.accept("role", new Object[] {
-                        admin.getRole(),
-                        admindat.getRole()
-                });
-                admin.setRole(admindat.getRole());
-            }
+      if (!historyEntries.isEmpty()) {
+        historyManagementRepository.saveAll(historyEntries);
+      }
 
-            // ============== PASSWORD (special) ==============
-            String newRawPassword = admindat.getAdminPassword();
-            if (newRawPassword != null && !newRawPassword.isBlank()) {
+      return saved;
 
-                boolean sameAsOld = encoder.matches(newRawPassword, admin.getAdminPassword());
-
-                if (!sameAsOld) {
-                    // don't log real password
-                    HistoryManagement history = new HistoryManagement();
-                    history.setTime(LocalDateTime.now());
-                    history.setOperationType("UPDATE");
-                    history.setOperatedBy(operatedBy);
-                    history.setOperatorId(id);
-                    history.setEntityName("Admin");
-                    history.setFieldName("adminPassword");
-                    history.setOldValue(null);
-                    history.setNewValue("UPDATED");
-
-                    historyEntries.add(history);
-
-                    admin.setAdminPassword(encoder.encode(newRawPassword));
-                }
-            }
-
-            AdminEntity saved = adminRepsitory.save(admin);
-
-            if (!historyEntries.isEmpty()) {
-                historyManagementRepository.saveAll(historyEntries);
-            }
-
-            return saved;
-
-        }).orElseThrow(() -> new EntityNotFoundException("Admin not found with id " + id));
-    }
+    }).orElseThrow(() -> new EntityNotFoundException("Admin not found with id " + id));
+  }
 
 }

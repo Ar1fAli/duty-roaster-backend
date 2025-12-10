@@ -21,30 +21,34 @@ import lombok.Setter;
 @Setter
 public class AdminEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(name = "admin_name")
-    private String adminName;
+  @Column(name = "admin_name")
+  private String adminName;
 
-    @Column(name = "admin_username", unique = true)
-    private String adminUsername;
+  @Column(name = "admin_username", unique = true)
+  private String adminUsername;
 
-    @Column(name = "admin_email")
-    private String adminEmail;
+  @Column(name = "admin_email")
+  private String adminEmail;
 
-    @Column(name = "admin_password")
-    private String adminPassword;
+  @Column(name = "admin_password")
+  private String adminPassword;
 
-    @Column(name = "contact_no")
-    private Long contactNo;
+  @Column(name = "contact_no")
+  private Long contactNo;
 
-    @Column(name = "role")
-    private String role;
+  @Column(name = "role")
+  private String role;
 
-    @JoinColumn(nullable = true)
-    @OneToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
-    private ProfilePicture pic;
+  @JoinColumn(nullable = true)
+  @OneToOne(fetch = FetchType.LAZY)
+  @JsonIgnore
+  private ProfilePicture pic;
+
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = true)
+  private UserData userData;
 }

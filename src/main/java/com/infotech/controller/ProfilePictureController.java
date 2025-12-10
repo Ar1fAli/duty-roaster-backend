@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
-public class ProfilePic {
+public class ProfilePictureController {
 
     private final CloudinaryService cloudinaryService;
     private final ProfilePictureRepository pictureRepository;

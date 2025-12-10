@@ -492,6 +492,19 @@ public class OfficerService {
     if (officerDto.getPassword() == null || officerDto.getPassword().isBlank()) {
       throw new BadRequestException("Password is required");
     }
+    if (officerDto.getEmail() == null || officerDto.getEmail().isBlank()) {
+      throw new BadRequestException("Email is required");
+    }
+
+    if (officerDto.getName() == null || officerDto.getName().isBlank()) {
+      throw new BadRequestException("Name is required");
+    }
+    if (officerDto.getRank() == null || officerDto.getRank().isBlank()) {
+      throw new BadRequestException("Rank is required");
+    }
+    if (officerDto.getContactno() == null) {
+      throw new BadRequestException("Contact No is required");
+    }
 
     // uniqueness check for create (ignoreId = null)
     validateUniqueFields(officerDto, null);
@@ -567,7 +580,14 @@ public class OfficerService {
 
   // ─────────────── UPDATE ───────────────
 
+  // ─────────────── UPDATE ───────────────
+
   public OfficerResponseDto updateOfficer(Long id, OfficerRequestDto updatedDto, String operatedBy) {
+
+    // basic null check – safer error instead of NPE
+    if (updatedDto == null) {
+      throw new BadRequestException("Request body cannot be null");
+    }
 
     Officer officer = officerRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Officer not found with id " + id));
@@ -582,6 +602,7 @@ public class OfficerService {
       Object oldVal = values[0];
       Object newVal = values[1];
 
+      // if same or both null → no history
       if (Objects.equals(oldVal, newVal)) {
         return;
       }
@@ -599,29 +620,35 @@ public class OfficerService {
       historyEntries.add(h);
     };
 
-    // name
-    logChange.accept("name", new Object[] {
-        officer.getName(),
-        updatedDto.getName()
-    });
-    officer.setName(updatedDto.getName());
+    // name (only update if provided)
+    if (updatedDto.getName() != null && !updatedDto.getName().isBlank()) {
+      logChange.accept("name", new Object[] {
+          officer.getName(),
+          updatedDto.getName()
+      });
+      officer.setName(updatedDto.getName());
+    }
 
     // email
-    logChange.accept("email", new Object[] {
-        officer.getEmail(),
-        updatedDto.getEmail()
-    });
-    officer.setEmail(updatedDto.getEmail());
+    if (updatedDto.getEmail() != null && !updatedDto.getEmail().isBlank()) {
+      logChange.accept("email", new Object[] {
+          officer.getEmail(),
+          updatedDto.getEmail()
+      });
+      officer.setEmail(updatedDto.getEmail());
+    }
 
     // rank
-    logChange.accept("rank", new Object[] {
-        officer.getRank(),
-        updatedDto.getRank()
-    });
-    officer.setRank(updatedDto.getRank());
+    if (updatedDto.getRank() != null && !updatedDto.getRank().isBlank()) {
+      logChange.accept("rank", new Object[] {
+          officer.getRank(),
+          updatedDto.getRank()
+      });
+      officer.setRank(updatedDto.getRank());
+    }
 
     // status (optional in DTO)
-    if (updatedDto.getStatus() != null) {
+    if (updatedDto.getStatus() != null && !updatedDto.getStatus().isBlank()) {
       logChange.accept("status", new Object[] {
           officer.getStatus(),
           updatedDto.getStatus()
@@ -629,26 +656,32 @@ public class OfficerService {
       officer.setStatus(updatedDto.getStatus());
     }
 
-    // experience
-    logChange.accept("experience", new Object[] {
-        officer.getExperience(),
-        updatedDto.getExperience()
-    });
-    officer.setExperience(updatedDto.getExperience());
+    // experience (only if not null – avoids overwriting with null)
+    if (updatedDto.getExperience() != null) {
+      logChange.accept("experience", new Object[] {
+          officer.getExperience(),
+          updatedDto.getExperience()
+      });
+      officer.setExperience(updatedDto.getExperience());
+    }
 
     // contactno
-    logChange.accept("contactno", new Object[] {
-        officer.getContactno(),
-        updatedDto.getContactno()
-    });
-    officer.setContactno(updatedDto.getContactno());
+    if (updatedDto.getContactno() != null) {
+      logChange.accept("contactno", new Object[] {
+          officer.getContactno(),
+          updatedDto.getContactno()
+      });
+      officer.setContactno(updatedDto.getContactno());
+    }
 
     // username
-    logChange.accept("username", new Object[] {
-        officer.getUsername(),
-        updatedDto.getUsername()
-    });
-    officer.setUsername(updatedDto.getUsername());
+    if (updatedDto.getUsername() != null && !updatedDto.getUsername().isBlank()) {
+      logChange.accept("username", new Object[] {
+          officer.getUsername(),
+          updatedDto.getUsername()
+      });
+      officer.setUsername(updatedDto.getUsername());
+    }
 
     // password (only if provided & changed)
     String newRawPassword = updatedDto.getPassword();
@@ -680,7 +713,6 @@ public class OfficerService {
 
     return toDto(saved);
   }
-
   // ─────────────── DELETE (SOFT) ───────────────
 
   public void softDeleteOfficer(Long id, String operatedBy) {

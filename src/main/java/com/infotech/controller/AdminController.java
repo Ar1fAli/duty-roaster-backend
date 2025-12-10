@@ -1,5 +1,6 @@
 package com.infotech.controller;
 
+import com.infotech.dto.AdminRequestDto;
 import com.infotech.dto.AdminResponseProfile;
 import com.infotech.dto.LoginResponse;
 import com.infotech.dto.Logindat;
@@ -25,48 +26,48 @@ import lombok.RequiredArgsConstructor;
 @CrossOrigin("*")
 public class AdminController {
 
-    private final AdminService adminService;
+  private final AdminService adminService;
 
-    @PostMapping("/register")
-    String register(@RequestBody AdminEntity adminEntity) {
-        String res = adminService.register(adminEntity);
-        return res;
+  @PostMapping("/register")
+  String register(@RequestBody AdminRequestDto adminEntity) {
+    String res = adminService.register(adminEntity);
+    return res;
+  }
+
+  // @GetMapping("/profile")
+  // Optional<AdminEntity> getAdmin(@RequestBody String userName) {
+  // Optional<AdminEntity> admin = adminService.getAdmin(userName);
+  // return admin;
+  // }@RequestParam String userName
+
+  @GetMapping("/profile")
+  public ResponseEntity<AdminResponseProfile> getAdmin(@RequestParam String userName) {
+    // String userName = authentication.getName(); // or from principal
+    AdminEntity admin = adminService.getAdmin(userName)
+        .orElseThrow(() -> new UsernameNotFoundException("Admin not found"));
+    AdminResponseProfile profile = new AdminResponseProfile();
+    profile.setId(admin.getId());
+    profile.setAdminName(admin.getAdminName());
+    profile.setAdminUsername(admin.getAdminUsername());
+    profile.setAdminEmail(admin.getAdminEmail());
+    profile.setContactNo(admin.getContactNo());
+    profile.setRole(admin.getRole());
+    if (admin.getPic() != null) {
+      System.out.println("null invocked");
+      profile.setUrl(admin.getPic().getUrl());
     }
+    return ResponseEntity.ok(profile);
+  }
 
-    // @GetMapping("/profile")
-    // Optional<AdminEntity> getAdmin(@RequestBody String userName) {
-    // Optional<AdminEntity> admin = adminService.getAdmin(userName);
-    // return admin;
-    // }@RequestParam String userName
+  @PostMapping("/login")
+  public LoginResponse login(@RequestBody Logindat adminEntity) {
+    return adminService.login(adminEntity);
+  }
 
-    @GetMapping("/profile")
-    public ResponseEntity<AdminResponseProfile> getAdmin(@RequestParam String userName) {
-        // String userName = authentication.getName(); // or from principal
-        AdminEntity admin = adminService.getAdmin(userName)
-                .orElseThrow(() -> new UsernameNotFoundException("Admin not found"));
-        AdminResponseProfile profile = new AdminResponseProfile();
-        profile.setId(admin.getId());
-        profile.setAdminName(admin.getAdminName());
-        profile.setAdminUsername(admin.getAdminUsername());
-        profile.setAdminEmail(admin.getAdminEmail());
-        profile.setContactNo(admin.getContactNo());
-        profile.setRole(admin.getRole());
-        if (admin.getPic() != null) {
-            System.out.println("null invocked");
-            profile.setUrl(admin.getPic().getUrl());
-        }
-        return ResponseEntity.ok(profile);
-    }
+  @PostMapping("/update/{id}/{role}")
+  public AdminEntity updateCategory(@PathVariable Long id, @RequestBody AdminEntity admindat,
+      @PathVariable String role) {
 
-    @PostMapping("/login")
-    public LoginResponse login(@RequestBody Logindat adminEntity) {
-        return adminService.login(adminEntity);
-    }
-
-    @PostMapping("/update/{id}/{role}")
-    public AdminEntity updateCategory(@PathVariable Long id, @RequestBody AdminEntity admindat,
-            @PathVariable String role) {
-
-        return adminService.updateCategory(id, admindat, role);
-    }
+    return adminService.updateCategory(id, admindat, role);
+  }
 }

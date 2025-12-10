@@ -183,7 +183,6 @@
 
 package com.infotech.controller;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import com.infotech.dto.VipProfileResponse;
@@ -231,7 +230,6 @@ public class CategoryController {
     @PostMapping("/register/{role}")
     public ResponseEntity<Category> createCategory(@RequestBody Category newCategory, @PathVariable String role) {
         System.out.println("category called");
-        newCategory.setCreatedTime(LocalDateTime.now());
         Category saved = categoryService.createOrRestoreCategory(newCategory, role);
         return ResponseEntity.ok(saved);
     }

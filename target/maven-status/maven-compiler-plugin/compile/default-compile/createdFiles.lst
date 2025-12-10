@@ -1,3 +1,4 @@
+com/infotech/entity/UserData.class
 com/infotech/controller/CategoryController.class
 com/infotech/service/CategoryService.class
 com/infotech/controller/DecisionController.class
@@ -13,9 +14,9 @@ com/infotech/dto/AssignmentSummary.class
 com/infotech/service/OfficerService.class
 com/infotech/controller/EditedController.class
 com/infotech/repository/NotificationCategoryRepository.class
+com/infotech/dto/AdminRequestDto.class
 com/infotech/service/AdminServiceImp.class
 com/infotech/dto/LeaveReq.class
-com/infotech/controller/ProfilePic.class
 com/infotech/dto/VipProfileResponse.class
 com/infotech/exception/BadRequestException.class
 com/infotech/dto/OfficerResponseDto.class
@@ -73,7 +74,9 @@ com/infotech/controller/UserController.class
 com/infotech/dto/UserProfileResponse.class
 com/infotech/entity/AssignmentValue$AssignmentValueBuilder.class
 com/infotech/exception/ResourceNotFoundException.class
+com/infotech/repository/UserDataRepository.class
 com/infotech/dto/NotificationRead.class
 com/infotech/entity/Officer.class
 com/infotech/entity/NotificationManagement.class
 com/infotech/service/UserService.class
+com/infotech/controller/ProfilePictureController.class

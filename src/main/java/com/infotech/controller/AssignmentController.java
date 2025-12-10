@@ -106,9 +106,10 @@ public class AssignmentController {
 
         }
 
-        @PostMapping("/complete/vip/{categoryId}")
-        public ResponseEntity<AssignmentResponse> completeDutyForCategory(@PathVariable Long categoryId) {
-                AssignmentResponse resp = assignmentService.completeDutyForCategory(categoryId);
+        @PostMapping("/complete/vip/{categoryId}/{status}")
+        public ResponseEntity<AssignmentResponse> completeDutyForCategory(@PathVariable Long categoryId,
+                        @PathVariable String status) {
+                AssignmentResponse resp = assignmentService.completeDutyForCategory(categoryId, status);
                 return ResponseEntity.ok(resp);
         }
 

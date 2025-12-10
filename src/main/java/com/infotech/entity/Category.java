@@ -1,7 +1,5 @@
 package com.infotech.entity;
 
-import java.time.LocalDateTime;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -38,8 +36,6 @@ public class Category {
     private String password;
     private String designation;
     private String status;
-
-    private LocalDateTime createdTime;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_id", nullable = true)

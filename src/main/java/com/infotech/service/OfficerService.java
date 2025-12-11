@@ -751,9 +751,9 @@ public class OfficerService {
     historyManagementRepository.save(history);
   }
 
-  public List<String> totalRank(String rank) {
+  public List<String> totalRank() {
 
-    List<Officer> officers = officerRepository.findByRank(rank);
+    List<Officer> officers = officerRepository.findAll();
 
     // extract unique ranks
     List<String> uniqueRanks = officers.stream()

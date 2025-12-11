@@ -126,78 +126,78 @@ import lombok.RequiredArgsConstructor;
 @CrossOrigin(origins = "*")
 public class OfficerController {
 
-    private final OfficerService officerService;
-    private final LeaveRequestRepository leaveRequestRepository; // keep if used elsewhere
-    private final OfficerRepository officerRepository;
+  private final OfficerService officerService;
+  private final LeaveRequestRepository leaveRequestRepository; // keep if used elsewhere
+  private final OfficerRepository officerRepository;
 
-    // In real app, read from SecurityContext
-    private String getCurrentOperator() {
-        return "Guard";
+  // In real app, read from SecurityContext
+  private String getCurrentOperator() {
+    return "Guard";
+  }
+
+  // LIST with pagination & filters
+  @GetMapping
+  public Page<OfficerResponseDto> getOfficers(
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size,
+      @RequestParam(required = false) String status,
+      @RequestParam(required = false) String rank) {
+
+    return officerService.getOfficers(page, size, status, rank);
+  }
+
+  // GET by username (profile)
+  @GetMapping("/profile")
+  public GuardProfileResponse getOfficer(@RequestParam String username) {
+    Officer offi = officerRepository.findByUsername(username)
+        .orElseThrow(() -> new RuntimeException("user name not found"));
+    GuardProfileResponse res = new GuardProfileResponse();
+    res.setId(offi.getId());
+    res.setUsername(offi.getUsername());
+    res.setName(offi.getName());
+    res.setEmail(offi.getEmail());
+    res.setStatus(offi.getStatus());
+    res.setContactno(offi.getContactno());
+    if (offi.getPic() != null) {
+      res.setUrl(offi.getPic().getUrl());
     }
+    return res;
 
-    // LIST with pagination & filters
-    @GetMapping
-    public Page<OfficerResponseDto> getOfficers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String rank) {
+  }
 
-        return officerService.getOfficers(page, size, status, rank);
-    }
+  // GET by id (optional)
+  @GetMapping("/{id}")
+  public ResponseEntity<OfficerResponseDto> getOfficerById(@PathVariable Long id) {
+    return ResponseEntity.ok(officerService.getByIdDto(id));
+  }
 
-    // GET by username (profile)
-    @GetMapping("/profile")
-    public GuardProfileResponse getOfficer(@RequestParam String username) {
-        Officer offi = officerRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("user name not found"));
-        GuardProfileResponse res = new GuardProfileResponse();
-        res.setId(offi.getId());
-        res.setUsername(offi.getUsername());
-        res.setName(offi.getName());
-        res.setEmail(offi.getEmail());
-        res.setStatus(offi.getStatus());
-        res.setContactno(offi.getContactno());
-        if (offi.getPic() != null) {
-            res.setUrl(offi.getPic().getUrl());
-        }
-        return res;
+  // CREATE or RESTORE
+  @PostMapping("/register/{role}")
+  public ResponseEntity<OfficerResponseDto> createOfficer(@RequestBody OfficerRequestDto officerDto,
+      @PathVariable String role) {
+    officerDto.setCreatedTime(LocalDateTime.now());
+    OfficerResponseDto saved = officerService.createOrRestoreOfficer(officerDto, role);
+    return ResponseEntity.ok(saved);
+  }
 
-    }
+  // UPDATE
+  @PutMapping("/{id}/{role}")
+  public ResponseEntity<OfficerResponseDto> updateOfficer(@PathVariable Long id,
+      @RequestBody OfficerRequestDto updatedDto, @PathVariable String role) {
+    // updatedDto.setCreatedTime(LocalDateTime.now());
+    OfficerResponseDto updated = officerService.updateOfficer(id, updatedDto, role);
+    return ResponseEntity.ok(updated);
+  }
 
-    // GET by id (optional)
-    @GetMapping("/{id}")
-    public ResponseEntity<OfficerResponseDto> getOfficerById(@PathVariable Long id) {
-        return ResponseEntity.ok(officerService.getByIdDto(id));
-    }
+  // SOFT DELETE
+  @DeleteMapping("/{id}/{role}")
+  public ResponseEntity<Void> deleteOfficer(@PathVariable Long id, @PathVariable String role) {
+    officerService.softDeleteOfficer(id, role);
+    return ResponseEntity.noContent().build();
+  }
 
-    // CREATE or RESTORE
-    @PostMapping("/register/{role}")
-    public ResponseEntity<OfficerResponseDto> createOfficer(@RequestBody OfficerRequestDto officerDto,
-            @PathVariable String role) {
-        officerDto.setCreatedTime(LocalDateTime.now());
-        OfficerResponseDto saved = officerService.createOrRestoreOfficer(officerDto, role);
-        return ResponseEntity.ok(saved);
-    }
-
-    // UPDATE
-    @PutMapping("/{id}/{role}")
-    public ResponseEntity<OfficerResponseDto> updateOfficer(@PathVariable Long id,
-            @RequestBody OfficerRequestDto updatedDto, @PathVariable String role) {
-        // updatedDto.setCreatedTime(LocalDateTime.now());
-        OfficerResponseDto updated = officerService.updateOfficer(id, updatedDto, role);
-        return ResponseEntity.ok(updated);
-    }
-
-    // SOFT DELETE
-    @DeleteMapping("/{id}/{role}")
-    public ResponseEntity<Void> deleteOfficer(@PathVariable Long id, @PathVariable String role) {
-        officerService.softDeleteOfficer(id, role);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/unique-ranks")
-    public ResponseEntity<List<String>> getUniqueRanks(@RequestParam String rank) {
-        return ResponseEntity.ok(officerService.totalRank(rank));
-    }
+  @GetMapping("/unique-ranks")
+  public ResponseEntity<List<String>> getUniqueRanks() {
+    return ResponseEntity.ok(officerService.totalRank());
+  }
 }

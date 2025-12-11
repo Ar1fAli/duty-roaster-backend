@@ -48,7 +48,7 @@ public class AdminController {
     AdminResponseProfile profile = new AdminResponseProfile();
     profile.setId(admin.getId());
     profile.setAdminName(admin.getAdminName());
-    profile.setAdminUsername(admin.getAdminUsername());
+    // profile.setAdminUsername(admin.getAdminUsername());
     profile.setAdminEmail(admin.getAdminEmail());
     profile.setContactNo(admin.getContactNo());
     profile.setRole(admin.getRole());
@@ -65,7 +65,7 @@ public class AdminController {
   }
 
   @PostMapping("/update/{id}/{role}")
-  public AdminEntity updateCategory(@PathVariable Long id, @RequestBody AdminEntity admindat,
+  public String updateCategory(@PathVariable Long id, @RequestBody AdminRequestDto admindat,
       @PathVariable String role) {
 
     return adminService.updateCategory(id, admindat, role);

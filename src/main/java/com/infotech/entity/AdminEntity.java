@@ -27,15 +27,15 @@ public class AdminEntity {
 
   @Column(name = "admin_name")
   private String adminName;
-
-  @Column(name = "admin_username", unique = true)
-  private String adminUsername;
-
+  //
+  // @Column(name = "admin_username", unique = true)
+  // private String adminUsername;
+  //
   @Column(name = "admin_email")
   private String adminEmail;
 
-  @Column(name = "admin_password")
-  private String adminPassword;
+  // @Column(name = "admin_password")
+  // private String adminPassword;
 
   @Column(name = "contact_no")
   private Long contactNo;

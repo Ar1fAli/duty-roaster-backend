@@ -183,7 +183,7 @@ public class AdminServiceImp implements AdminService {
       admin.setContactNo(adminEntity.getContactNo());
     }
     if (adminEntity.getRole() != null && !adminEntity.getRole().isBlank()) {
-      admin.setRole(adminEntity.getRole());
+      userd.setRole(adminEntity.getRole());
 
     }
 
@@ -204,7 +204,7 @@ public class AdminServiceImp implements AdminService {
 
   @Override
   public Optional<AdminEntity> getAdmin(String userName) {
-    Optional<AdminEntity> admindata = adminRepsitory.findByAdminUsername(userName);
+    Optional<AdminEntity> admindata = adminRepsitory.findByUserData_Username(userName);
     return admindata;
   }
 
@@ -232,6 +232,7 @@ public class AdminServiceImp implements AdminService {
       LoginResponse res = new LoginResponse();
       res.setData(jwtService.generateToken(loginDto.getUsername()));
       res.setRole(role);
+      res.setUsername(loginDto.getUsername());
 
       return res;
 
@@ -242,7 +243,7 @@ public class AdminServiceImp implements AdminService {
   }
 
   // ✅ UPDATED: history + validation + null-safe update
-  public AdminEntity updateCategory(Long id, AdminEntity admindat, String role) {
+  public String updateCategory(Long id, AdminRequestDto admindat, String role) {
 
     return adminRepsitory.findById(id).map(admin -> {
 
@@ -251,12 +252,18 @@ public class AdminServiceImp implements AdminService {
 
       // --- uniqueness check for username (if changed) ---
       if (admindat.getAdminUsername() != null && !admindat.getAdminUsername().isBlank()) {
-        adminRepsitory.findByAdminUsername(admindat.getAdminUsername())
+        adminRepsitory.findByUserData_Username(admindat.getAdminUsername())
             .filter(existing -> !Objects.equals(existing.getId(), id))
             .ifPresent(existing -> {
               // this will be caught in controller and sent as 400
               throw new IllegalStateException("Username already exists");
             });
+        // adminRepsitory.findByAdminUsername(admindat.getAdminUsername())
+        // .filter(existing -> !Objects.equals(existing.getId(), id))
+        // .ifPresent(existing -> {
+        // // this will be caught in controller and sent as 400
+        // throw new IllegalStateException("Username already exists");
+        // });
       }
 
       List<HistoryManagement> historyEntries = new ArrayList<>();
@@ -296,15 +303,6 @@ public class AdminServiceImp implements AdminService {
         admin.setAdminName(admindat.getAdminName());
       }
 
-      // username
-      if (admindat.getAdminUsername() != null && !admindat.getAdminUsername().isBlank()) {
-        logChange.accept("adminUsername", new Object[] {
-            admin.getAdminUsername(),
-            admindat.getAdminUsername()
-        });
-        admin.setAdminUsername(admindat.getAdminUsername());
-      }
-
       // email
       if (admindat.getAdminEmail() != null && !admindat.getAdminEmail().isBlank()) {
         logChange.accept("adminEmail", new Object[] {
@@ -323,20 +321,37 @@ public class AdminServiceImp implements AdminService {
         admin.setContactNo(admindat.getContactNo());
       }
 
+      UserData userdat = userDataRepository.findById(admin.getUserData().getId())
+          .orElseThrow(() -> new EntityNotFoundException("User not found"));
       // role
-      if (admindat.getRole() != null && !admindat.getRole().isBlank()) {
-        logChange.accept("role", new Object[] {
-            admin.getRole(),
-            admindat.getRole()
+      // if (admindat.getRole() != null && !admindat.getRole().isBlank()) {
+      // logChange.accept("role", new Object[] {
+      // admin.getRole(),
+      // admindat.getRole()
+      // });
+      // userdat.setRole(admindat.getRole());
+      //
+      // // admin.setRole(admindat.getRole());
+      // }
+      // username
+      //
+
+      if (admindat.getAdminUsername() != null && !admindat.getAdminUsername().isBlank()) {
+        logChange.accept("adminUsername", new Object[] {
+            // admin.getAdminUsername(),
+            userdat.getUsername(),
+            admindat.getAdminUsername()
         });
-        admin.setRole(admindat.getRole());
+        userdat.setUsername(admindat.getAdminUsername());
+        // admin.setAdminUsername(admindat.getAdminUsername());
       }
 
       // ============== PASSWORD (special) ==============
       String newRawPassword = admindat.getAdminPassword();
+      System.out.println(newRawPassword + " new and old password " + admin.getUserData().getPassword());
       if (newRawPassword != null && !newRawPassword.isBlank()) {
 
-        boolean sameAsOld = encoder.matches(newRawPassword, admin.getAdminPassword());
+        boolean sameAsOld = encoder.matches(newRawPassword, admin.getUserData().getPassword());
 
         if (!sameAsOld) {
           // don't log real password
@@ -352,17 +367,21 @@ public class AdminServiceImp implements AdminService {
 
           historyEntries.add(history);
 
-          admin.setAdminPassword(encoder.encode(newRawPassword));
+          // admin.setAdminPassword(encoder.encode(newRawPassword));
+          userdat.setPassword(encoder.encode(newRawPassword));
         }
       }
 
+      // userdat.setId(admin.getUserData().getId());
+      userDataRepository.save(userdat);
+      admin.setUserData(userdat);
       AdminEntity saved = adminRepsitory.save(admin);
 
       if (!historyEntries.isEmpty()) {
         historyManagementRepository.saveAll(historyEntries);
       }
 
-      return saved;
+      return "register successfully";
 
     }).orElseThrow(() -> new EntityNotFoundException("Admin not found with id " + id));
   }

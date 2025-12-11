@@ -17,5 +17,5 @@ public interface AdminService {
 
   // AdminEntity updateCategory(Long id, AdminEntity admindat);
 
-  AdminEntity updateCategory(Long id, AdminEntity admindat, String operatedBy);
+  String updateCategory(Long id, AdminRequestDto admindat, String operatedBy);
 }

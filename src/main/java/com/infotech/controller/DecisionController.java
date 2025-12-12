@@ -33,204 +33,204 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DecisionController {
 
-    private final LeaveRequestRepository leaveRequestRepository;
-    private final AccidentRepository accidentRepository;
-    private final AssignmentService assignmentService;
-    private final NotificationGuardRepository notificationGuardRepository;
-    private final NotificationManagementRepository notificationManagementRepo;
+  private final LeaveRequestRepository leaveRequestRepository;
+  private final AccidentRepository accidentRepository;
+  private final AssignmentService assignmentService;
+  private final NotificationGuardRepository notificationGuardRepository;
+  private final NotificationManagementRepository notificationManagementRepo;
 
-    @PostMapping("/decision")
-    public LeaveRequest createCategorye(@RequestBody LeaveRequest req) {
+  @PostMapping("/decision")
+  public LeaveRequest createCategorye(@RequestBody LeaveRequest req) {
 
-        System.out.println(req.getStatus());
-        System.out.println(req.getMessage());
-        System.out.println(req.getOfficer());
-        req.setCurrent(true);
+    System.out.println(req.getStatus());
+    System.out.println(req.getMessage());
+    System.out.println(req.getOfficer());
+    req.setCurrent(true);
 
-        NotificationManagement notificationManagement = new NotificationManagement();
+    NotificationManagement notificationManagement = new NotificationManagement();
 
-        notificationManagement.setNotificationSender("GUARD");
-        notificationManagement.setNotificationSenderId(req.getOfficer().getId());
-        notificationManagement.setNotificationMessage("Guard is Decided For Duty Please Check Status");
-        notificationManagement.setNotificationStatus(false);
-        notificationManagement.setNotificationSenderName(req.getOfficer().getName());
+    notificationManagement.setNotificationSender("GUARD");
+    notificationManagement.setNotificationSenderId(req.getOfficer().getId());
+    notificationManagement.setNotificationMessage("Guard is Decided For Duty Please Check Status");
+    notificationManagement.setNotificationStatus(false);
+    notificationManagement.setNotificationSenderName(req.getOfficer().getName());
 
-        notificationManagement.setNotificationAssignTime(LocalDateTime.now());
+    notificationManagement.setNotificationAssignTime(LocalDateTime.now());
 
-        notificationManagementRepo.save(notificationManagement);
+    notificationManagementRepo.save(notificationManagement);
 
-        req.setRequestTime(LocalDateTime.now());
+    req.setRequestTime(LocalDateTime.now());
 
-        return leaveRequestRepository.save(req);
-    }
+    return leaveRequestRepository.save(req);
+  }
 
-    @PostMapping("/decision/management")
-    public ResponseEntity<LeaveRequest> decideLeave(@RequestBody LeaveReq req) {
+  @PostMapping("/decision/management")
+  public ResponseEntity<LeaveRequest> decideLeave(@RequestBody LeaveReq req) {
 
-        System.out.println("status is " + req.getStatus());
-        System.out.println("id is " + req.getId());
+    System.out.println("status is " + req.getStatus());
+    System.out.println("id is " + req.getId());
 
-        LeaveRequest leave = leaveRequestRepository.findById(req.getId())
-                .orElseThrow(() -> new RuntimeException("LeaveRequest not found with id: " + req.getId()));
+    LeaveRequest leave = leaveRequestRepository.findById(req.getId())
+        .orElseThrow(() -> new RuntimeException("LeaveRequest not found with id: " + req.getId()));
 
-        // keep old status so we only trigger once
-        String oldStatus = leave.getStatus();
+    // keep old status so we only trigger once
+    String oldStatus = leave.getStatus();
 
-        leave.setStatus(req.getStatus());
-        leave.setCurrent(true);
-        leave.setResponseTime(LocalDateTime.now());
+    leave.setStatus(req.getStatus());
+    leave.setCurrent(true);
+    leave.setResponseTime(LocalDateTime.now());
 
-        // accepted statuses
-        boolean isNowAccepted = "admin_accepted".equalsIgnoreCase(req.getStatus())
-                || "manager_accepted".equalsIgnoreCase(req.getStatus());
+    // accepted statuses
+    boolean isNowAccepted = "admin_accepted".equalsIgnoreCase(req.getStatus())
+        || "manager_accepted".equalsIgnoreCase(req.getStatus());
 
-        // boolean wasAcceptedBefore = "admin_accepted".equalsIgnoreCase(oldStatus)
-        // || "manager_accepted".equalsIgnoreCase(oldStatus);
-        //
-        // only trigger operation when changing from NOT accepted -> accepted
-        if (isNowAccepted) {
-
-            // 🔹 adjust this depending on your LeaveRequest entity:
-            // e.g. leave.getOfficer() or leave.getGuardData()
-            Officer officer = leave.getOfficer(); // <-- change to getGuardData() if needed
-
-            if (officer == null || officer.getId() == null) {
-                throw new RuntimeException("No guard linked to leave request id: " + req.getId());
-            }
-
-            Long officerId = officer.getId();
-
-            // This will:
-            // 1) mark the guard's last active assignment as Inactive
-            // 2) set guard status = Inactive
-            // 3) refill one guard for that VIP/category
-            assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId);
-        }
-
-        NotificationGuard notificationOfficer = new NotificationGuard();
-        notificationOfficer.setRead(false);
-        notificationOfficer.setOfficer(leave.getOfficer());
-        notificationOfficer.setMessage("Your Request is Accepted by the Authority check the status of your request");
-        notificationGuardRepository.save(notificationOfficer);
-
-        leaveRequestRepository.save(leave);
-
-        return ResponseEntity.ok(leave);
-    }
-
-    @PostMapping("/accident")
-    public Accident createCategorye(@RequestBody Accident req) {
-        System.out.println(req.getReq());
-        System.out.println(req.getMessage());
-        System.out.println(req.getGuardData());
-        req.setRequestTime(LocalDateTime.now());
-
-        NotificationManagement notificationManagement = new NotificationManagement();
-
-        notificationManagement.setNotificationSender("GUARD");
-        notificationManagement.setNotificationSenderId(req.getGuardData().getId());
-        notificationManagement.setNotificationMessage("Guard is Decided For Duty Please Check Status");
-        notificationManagement.setNotificationStatus(false);
-        notificationManagement.setNotificationSenderName(req.getGuardData().getName());
-
-        notificationManagement.setNotificationAssignTime(LocalDateTime.now());
-
-        notificationManagementRepo.save(notificationManagement);
-
-        req.setRequestTime(LocalDateTime.now());
-
-        return accidentRepository.save(req);
-    }
-
-    @GetMapping("/decision/all")
-    public List<LeaveRequest> getAllLeaves() {
-        return leaveRequestRepository.findAll();
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<List<LeaveRequest>> getCurrentLeave(@PathVariable Long id) {
-        return ResponseEntity.ok(leaveRequestRepository.findByOfficer_IdAndCurrent(id, true));
-    }
-
-    @GetMapping("/accidentreq/{id}")
-    public ResponseEntity<List<Accident>> getIncidient(@PathVariable Long id) {
-        return ResponseEntity.ok(accidentRepository.findByGuardData_Id(id));
-    }
-
-    @GetMapping("/accidentall")
-    public ResponseEntity<List<Accident>> getIncidient() {
-        return ResponseEntity.ok(accidentRepository.findAll());
-    }
-
-    // @PostMapping("/accidentupdate")
-    // public ResponseEntity<Accident> accidentUpdate(@RequestBody Accidentreq req)
-    // {
+    // boolean wasAcceptedBefore = "admin_accepted".equalsIgnoreCase(oldStatus)
+    // || "manager_accepted".equalsIgnoreCase(oldStatus);
     //
-    // System.out.println("id is this " + req.getId());
-    // System.out.println("req is this " + req.getReq());
-    //
-    // Accident acc = accidentRepository.findById(req.getId())
-    // .orElseThrow(() -> new RuntimeException("Accident not found with id: " +
-    // req.getId()));
-    //
-    // acc.setId(req.getId());
-    // acc.setReq(req.getReq());
-    // acc.setResponseTime(LocalDateTime.now());
-    // accidentRepository.save(acc);
-    //
-    // return ResponseEntity.ok(acc);
-    // }
+    // only trigger operation when changing from NOT accepted -> accepted
+    if (isNowAccepted) {
 
-    @PostMapping("/accidentupdate")
-    public ResponseEntity<Accident> accidentUpdate(@RequestBody Accidentreq req) {
+      // 🔹 adjust this depending on your LeaveRequest entity:
+      // e.g. leave.getOfficer() or leave.getGuardData()
+      Officer officer = leave.getOfficer(); // <-- change to getGuardData() if needed
 
-        System.out.println("id is this " + req.getId());
-        System.out.println("req is this " + req.getReq());
+      if (officer == null || officer.getId() == null) {
+        throw new RuntimeException("No guard linked to leave request id: " + req.getId());
+      }
 
-        Accident acc = accidentRepository.findById(req.getId())
-                .orElseThrow(() -> new RuntimeException(
-                        "Accident not found with id: " + req.getId()));
+      Long officerId = officer.getId();
 
-        // old status to detect first-time acceptance
-        String oldStatus = acc.getReq();
-
-        // update status + response time
-        acc.setReq(req.getReq());
-        acc.setResponseTime(LocalDateTime.now());
-
-        // accepted statuses
-        boolean isNowAccepted = "admin_rejected".equalsIgnoreCase(req.getReq())
-                || "manager_rejected".equalsIgnoreCase(req.getReq());
-
-        // boolean wasAcceptedBefore = "admin_accepted".equalsIgnoreCase(oldStatus)
-        // || "manager_accepted".equalsIgnoreCase(oldStatus);
-        //
-        // only trigger when changing from NOT accepted -> accepted
-        if (isNowAccepted) {
-
-            Officer guard = acc.getGuardData();
-            if (guard == null || guard.getId() == null) {
-                throw new RuntimeException(
-                        "No guard linked to accident id: " + req.getId());
-            }
-
-            Long officerId = guard.getId();
-
-            // this will:
-            // 1) mark guard's active assignment Inactive
-            // 2) set guard status = Inactive
-            // 3) refill one guard for that VIP/category
-            assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId);
-        }
-        NotificationGuard notificationOfficer = new NotificationGuard();
-        notificationOfficer.setRead(false);
-        notificationOfficer.setOfficer(acc.getGuardData());
-        notificationOfficer.setMessage("Your Request is Accepted by the Authority check the status of your request");
-        notificationGuardRepository.save(notificationOfficer);
-
-        accidentRepository.save(acc);
-
-        return ResponseEntity.ok(acc);
+      // This will:
+      // 1) mark the guard's last active assignment as Inactive
+      // 2) set guard status = Inactive
+      // 3) refill one guard for that VIP/category
+      assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId);
     }
+
+    NotificationGuard notificationOfficer = new NotificationGuard();
+    notificationOfficer.setRead(false);
+    notificationOfficer.setOfficer(leave.getOfficer());
+    notificationOfficer.setMessage("Your Request is Accepted by the Authority check the status of your request");
+    notificationGuardRepository.save(notificationOfficer);
+
+    leaveRequestRepository.save(leave);
+
+    return ResponseEntity.ok(leave);
+  }
+
+  @PostMapping("/accident")
+  public Accident createCategorye(@RequestBody Accident req) {
+    System.out.println(req.getReq());
+    System.out.println(req.getMessage());
+    System.out.println(req.getGuardData());
+    req.setRequestTime(LocalDateTime.now());
+
+    NotificationManagement notificationManagement = new NotificationManagement();
+
+    notificationManagement.setNotificationSender("GUARD");
+    notificationManagement.setNotificationSenderId(req.getGuardData().getId());
+    notificationManagement.setNotificationMessage("Guard is Decided For Duty Please Check Status");
+    notificationManagement.setNotificationStatus(false);
+    notificationManagement.setNotificationSenderName(req.getGuardData().getName());
+
+    notificationManagement.setNotificationAssignTime(LocalDateTime.now());
+
+    notificationManagementRepo.save(notificationManagement);
+
+    req.setRequestTime(LocalDateTime.now());
+
+    return accidentRepository.save(req);
+  }
+
+  @GetMapping("/decision/all")
+  public List<LeaveRequest> getAllLeaves() {
+    return leaveRequestRepository.findAll();
+  }
+
+  @GetMapping("/{id}")
+  public ResponseEntity<List<LeaveRequest>> getCurrentLeave(@PathVariable Long id) {
+    return ResponseEntity.ok(leaveRequestRepository.findByOfficer_IdAndCurrent(id, true));
+  }
+
+  @GetMapping("/accidentreq/{id}")
+  public ResponseEntity<List<Accident>> getIncidient(@PathVariable Long id) {
+    return ResponseEntity.ok(accidentRepository.findByGuardData_Id(id));
+  }
+
+  @GetMapping("/accidentall")
+  public ResponseEntity<List<Accident>> getIncidient() {
+    return ResponseEntity.ok(accidentRepository.findAll());
+  }
+
+  // @PostMapping("/accidentupdate")
+  // public ResponseEntity<Accident> accidentUpdate(@RequestBody Accidentreq req)
+  // {
+  //
+  // System.out.println("id is this " + req.getId());
+  // System.out.println("req is this " + req.getReq());
+  //
+  // Accident acc = accidentRepository.findById(req.getId())
+  // .orElseThrow(() -> new RuntimeException("Accident not found with id: " +
+  // req.getId()));
+  //
+  // acc.setId(req.getId());
+  // acc.setReq(req.getReq());
+  // acc.setResponseTime(LocalDateTime.now());
+  // accidentRepository.save(acc);
+  //
+  // return ResponseEntity.ok(acc);
+  // }
+
+  @PostMapping("/accidentupdate")
+  public ResponseEntity<Accident> accidentUpdate(@RequestBody Accidentreq req) {
+
+    System.out.println("id is this " + req.getId());
+    System.out.println("req is this " + req.getReq());
+
+    Accident acc = accidentRepository.findById(req.getId())
+        .orElseThrow(() -> new RuntimeException(
+            "Accident not found with id: " + req.getId()));
+
+    // old status to detect first-time acceptance
+    String oldStatus = acc.getReq();
+
+    // update status + response time
+    acc.setReq(req.getReq());
+    acc.setResponseTime(LocalDateTime.now());
+
+    // accepted statuses
+    boolean isNowAccepted = "admin_rejected".equalsIgnoreCase(req.getReq())
+        || "manager_rejected".equalsIgnoreCase(req.getReq());
+
+    // boolean wasAcceptedBefore = "admin_accepted".equalsIgnoreCase(oldStatus)
+    // || "manager_accepted".equalsIgnoreCase(oldStatus);
+    //
+    // only trigger when changing from NOT accepted -> accepted
+    if (!isNowAccepted) {
+
+      Officer guard = acc.getGuardData();
+      if (guard == null || guard.getId() == null) {
+        throw new RuntimeException(
+            "No guard linked to accident id: " + req.getId());
+      }
+
+      Long officerId = guard.getId();
+
+      // this will:
+      // 1) mark guard's active assignment Inactive
+      // 2) set guard status = Inactive
+      // 3) refill one guard for that VIP/category
+      assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId);
+    }
+    NotificationGuard notificationOfficer = new NotificationGuard();
+    notificationOfficer.setRead(false);
+    notificationOfficer.setOfficer(acc.getGuardData());
+    notificationOfficer.setMessage("Your Request is Accepted by the Authority check the status of your request");
+    notificationGuardRepository.save(notificationOfficer);
+
+    accidentRepository.save(acc);
+
+    return ResponseEntity.ok(acc);
+  }
 
 }

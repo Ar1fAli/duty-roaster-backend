@@ -158,6 +158,7 @@ public class OfficerController {
     res.setEmail(offi.getEmail());
     res.setStatus(offi.getStatus());
     res.setContactno(offi.getContactno());
+    res.setRank(offi.getRank());
     if (offi.getPic() != null) {
       res.setUrl(offi.getPic().getUrl());
     }

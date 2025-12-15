@@ -210,62 +210,67 @@ import lombok.RequiredArgsConstructor;
 @CrossOrigin(origins = "*")
 public class CategoryController {
 
-    private final CategoryService categoryService;
+  private final CategoryService categoryService;
 
-    private final CategoryRepository categoryRepository;
+  private final CategoryRepository categoryRepository;
 
-    // In real app, get from
-    // SecurityContextHolder.getContext().getAuthentication().getName()
-    private String getCurrentOperator() {
-        return "Guard"; // placeholder
+  // In real app, get from
+  // SecurityContextHolder.getContext().getAuthentication().getName()
+  private String getCurrentOperator() {
+    return "Guard"; // placeholder
+  }
+
+  @GetMapping
+  public List<Category> getAllCategories() {
+    // System.out.println("called data");
+    return categoryRepository.findAll();
+  }
+
+  // CREATE or RESTORE
+  @PostMapping("/register/{role}")
+  public ResponseEntity<Category> createCategory(@RequestBody Category newCategory, @PathVariable String role) {
+    System.out.println("category called");
+    Category saved = categoryService.createOrRestoreCategory(newCategory, role);
+    return ResponseEntity.ok(saved);
+  }
+
+  // UPDATE
+  @PutMapping("/{id}/{role}")
+  public ResponseEntity<Category> updateCategory(@PathVariable Long id, @PathVariable String role,
+      @RequestBody Category updatedCategory) {
+    // updatedCategory.setCreatedTime(LocalDateTime.now());
+    Category updated = categoryService.updateCategory(id, updatedCategory, role);
+    return ResponseEntity.ok(updated);
+  }
+
+  // SOFT DELETE
+  @DeleteMapping("/{id}/{operator}")
+  public ResponseEntity<Void> deleteCategory(@PathVariable Long id, @PathVariable String operator) {
+    categoryService.softDeleteCategory(id, operator);
+    return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/profile")
+  public VipProfileResponse getAdmin(@RequestParam String username) {
+    Category admindata = categoryRepository.findByUsername(username)
+        .orElseThrow(() -> new RuntimeException("Vip data not found"));
+    VipProfileResponse res = new VipProfileResponse();
+    res.setId(admindata.getId());
+    res.setName(admindata.getName());
+    res.setEmail(admindata.getEmail());
+    res.setUsername(admindata.getUsername());
+    res.setStatus(admindata.getStatus());
+    res.setContactno(admindata.getContactno());
+    System.out.println(admindata.getPic() + "pic id value");
+    if (admindata.getPic() != null) {
+      res.setUrl(admindata.getPic().getUrl());
+      System.out.println(admindata.getPic().getUrl() + "pic Url value ");
     }
+    return res;
+  }
 
-    @GetMapping
-    public List<Category> getAllCategories() {
-        // System.out.println("called data");
-        return categoryRepository.findAll();
-    }
-
-    // CREATE or RESTORE
-    @PostMapping("/register/{role}")
-    public ResponseEntity<Category> createCategory(@RequestBody Category newCategory, @PathVariable String role) {
-        System.out.println("category called");
-        Category saved = categoryService.createOrRestoreCategory(newCategory, role);
-        return ResponseEntity.ok(saved);
-    }
-
-    // UPDATE
-    @PutMapping("/{id}/{role}")
-    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @PathVariable String role,
-            @RequestBody Category updatedCategory) {
-        // updatedCategory.setCreatedTime(LocalDateTime.now());
-        Category updated = categoryService.updateCategory(id, updatedCategory, role);
-        return ResponseEntity.ok(updated);
-    }
-
-    // SOFT DELETE
-    @DeleteMapping("/{id}/{operator}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long id, @PathVariable String operator) {
-        categoryService.softDeleteCategory(id, operator);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/profile")
-    public VipProfileResponse getAdmin(@RequestParam String username) {
-        Category admindata = categoryRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Vip data not found"));
-        VipProfileResponse res = new VipProfileResponse();
-        res.setId(admindata.getId());
-        res.setName(admindata.getName());
-        res.setEmail(admindata.getEmail());
-        res.setUsername(admindata.getUsername());
-        res.setStatus(admindata.getStatus());
-        res.setContactno(admindata.getContactno());
-        System.out.println(admindata.getPic() + "pic id value");
-        if (admindata.getPic() != null) {
-            res.setUrl(admindata.getPic().getUrl());
-            System.out.println(admindata.getPic().getUrl() + "pic Url value ");
-        }
-        return res;
-    }
+  @GetMapping("/unique-designation")
+  public ResponseEntity<List<String>> getUniqueRanks() {
+    return ResponseEntity.ok(categoryService.totalRank());
+  }
 }

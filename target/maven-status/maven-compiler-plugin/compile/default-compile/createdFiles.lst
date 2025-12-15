@@ -4,6 +4,7 @@ com/infotech/service/CategoryService.class
 com/infotech/controller/DecisionController.class
 com/infotech/config/SecurityConfig.class
 com/infotech/repository/AdminRepsitory.class
+com/infotech/config/FirebaseConfig.class
 com/infotech/repository/LeaveRequestRepository.class
 com/infotech/entity/AdminEntity.class
 com/infotech/entity/NotificationGuard.class
@@ -71,6 +72,7 @@ com/infotech/entity/UserGuardAssignment.class
 com/infotech/UserCategoryApiApplication.class
 com/infotech/dto/AdminResponseProfile.class
 com/infotech/controller/UserController.class
+com/infotech/service/FcmService.class
 com/infotech/dto/UserProfileResponse.class
 com/infotech/entity/AssignmentValue$AssignmentValueBuilder.class
 com/infotech/exception/ResourceNotFoundException.class

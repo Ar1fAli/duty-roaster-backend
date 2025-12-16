@@ -13,19 +13,20 @@ import lombok.Data;
 @Data
 public class NotificationManagement {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long notificationId;
-    private Long notificationSenderId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long notificationId;
+  private Long notificationSenderId;
 
-    private String notificationSender;
-    private String notificationSenderName;
-    private String notificationMessage;
-    private String notificationReadBy;
+  private String notificationSender;
+  private String notificationSenderName;
+  private String notificationMessage;
+  private String notificationReadBy;
+  private String notificationToken;
 
-    private boolean notificationStatus;
+  private boolean notificationStatus;
 
-    private LocalDateTime notificationAssignTime;
-    private LocalDateTime notificationReadTime;
+  private LocalDateTime notificationAssignTime;
+  private LocalDateTime notificationReadTime;
 
 }

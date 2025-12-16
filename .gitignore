@@ -1,5 +1,10 @@
-/src/main/resource/application.properties
+*.properties
 
 /src/main/resource/firebase-service-account.json
 
 
+*.json
+/src/main/resource
+/target
+*.sh
+*credentials*

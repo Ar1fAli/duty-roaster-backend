@@ -36,7 +36,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AssignmentService {
@@ -47,6 +49,8 @@ public class AssignmentService {
   private final NotificationCategoryRepository notificationCategoryRepository;
   private final NotificationGuardRepository notificationGuardRepository;
   private final NotificationManagementRepository notificationManagementRepo;
+
+  private final FcmService service;
 
   @PersistenceContext
   private EntityManager em;
@@ -205,11 +209,40 @@ public class AssignmentService {
             .filter(a -> a.getOfficer().getId()
                 .equals(officer.getId()))
             .findFirst();
+        NotificationManagement notificationmana = notificationManagementRepo
+            .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(officer.getId(),
+                "guard");
 
+        NotificationManagement notification = new NotificationManagement();
         NotificationGuard notificationGuard = new NotificationGuard();
         notificationGuard.setRead(false);
         notificationGuard.setOfficer(officer);
         notificationGuard.setMessage("New Duty Assign Please Check Your  Duty");
+        notification.setNotificationSenderId(officer.getId());
+        notification.setNotificationSender("guard");
+        notification.setNotificationSenderName(officer.getName());
+        notification.setNotificationMessage("New Duty Assign Please Check Your  Duty");
+        if (notificationmana != null) {
+          notification.setNotificationToken(notificationmana.getNotificationToken());
+        }
+        notification.setNotificationStatus(false);
+        notification.setNotificationAssignTime(LocalDateTime.now());
+        // service.send(notificationmana.getNotificationToken(), "Duty Assign", "Go And
+        // Check Your Duty From The Portal");
+        //
+        //
+        if (notificationmana != null) {
+          try {
+            service.send(
+                notificationmana.getNotificationToken(),
+                "Duty Assign",
+                "Go And Check Your Duty From The Portal");
+          } catch (Exception e) {
+            log.error("FCM send failed for officer {}", officer.getId(), e);
+          }
+        }
+
+        notificationManagementRepo.save(notification);
 
         notificationGuardRepository.save(notificationGuard);
 
@@ -250,15 +283,44 @@ public class AssignmentService {
       categoryRepository.save(category);
     }
 
+    NotificationManagement notificationman = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(category.getId(), "vip");
+
+    NotificationManagement notificationcat = new NotificationManagement();
     NotificationCategory notificationCategory = new NotificationCategory();
     notificationCategory.setRead(false);
     notificationCategory.setCategory(category);
     notificationCategory.setMessage("New Duty Assign Please Check Your  Duty");
     notificationCategoryRepository.save(notificationCategory);
 
+    notificationcat.setNotificationSenderId(category.getId());
+    notificationcat.setNotificationSender("vip");
+    notificationcat.setNotificationSenderName(category.getName());
+    notificationcat.setNotificationMessage("Duty Assign Successfully");
+    notificationcat.setNotificationStatus(false);
+    notificationcat.setNotificationAssignTime(LocalDateTime.now());
+    notificationManagementRepo.save(notificationcat);
+    if (notificationman != null) {
+      notificationcat.setNotificationToken(notificationman.getNotificationToken());
+    }
+
+    // service.send(notificationman.getNotificationToken(), "Duty Assign", "For More
+    // Detail Check It From The Portal");
+    if (notificationman != null) {
+      try {
+        service.send(
+            notificationman.getNotificationToken(),
+            "Duty Assign",
+            "For More Detail Check It From The Portal");
+      } catch (Exception e) {
+        log.error("FCM send failed for category {}", category.getId(), e);
+      }
+    }
+
     AssignmentResponse resp = new AssignmentResponse();
     resp.setSummary(summaries);
     resp.setDetails(responseDetails);
+
     return resp;
   }
 
@@ -369,8 +431,10 @@ public class AssignmentService {
     Long vipId = assignment.getCategory().getId();
 
     NotificationManagement notificationManagement = new NotificationManagement();
+    NotificationManagement notificationmange = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(vipId, "vip");
 
-    notificationManagement.setNotificationSender("VIP");
+    notificationManagement.setNotificationSender("vip");
     notificationManagement.setNotificationSenderId(vipId);
     notificationManagement.setNotificationMessage("Duty Completed");
     notificationManagement.setNotificationStatus(false);
@@ -378,6 +442,23 @@ public class AssignmentService {
         .getName());
 
     notificationManagement.setNotificationAssignTime(LocalDateTime.now());
+
+    if (notificationmange != null) {
+      notificationManagement.setNotificationToken(notificationmange.getNotificationToken());
+    }
+
+    // service.send(notificationman.getNotificationToken(), "Duty Assign", "For More
+    // Detail Check It From The Portal");
+    if (notificationmange != null) {
+      try {
+        service.send(
+            notificationmange.getNotificationToken(),
+            "Duty Assign",
+            "For More Detail Check It From The Portal");
+      } catch (Exception e) {
+        log.error("FCM send failed for vip {}", vipId, e);
+      }
+    }
 
     notificationManagementRepo.save(notificationManagement);
 
@@ -696,6 +777,7 @@ public class AssignmentService {
       AssignmentResponse resp = new AssignmentResponse();
       resp.setSummary(Collections.emptyList());
       resp.setDetails(Collections.emptyList());
+
       return resp;
     }
 
@@ -725,16 +807,64 @@ public class AssignmentService {
     // 4. Free all these officers
     for (Officer officer : officersToFree.values()) {
       officer.setStatus("Inactive"); // in
-                                     // your
-                                     // system:
-                                     // free/available
+      NotificationManagement notificationofficer = new NotificationManagement();
+      NotificationManagement notificationidoff = notificationManagementRepo
+          .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(officer.getId(),
+              "guard");
+      notificationofficer.setNotificationSenderId(officer.getId());
+      notificationofficer.setNotificationSender("guard");
+      notificationofficer.setNotificationSenderName(officer.getName());
+      notificationofficer.setNotificationMessage("Your duty Status is ----" + status);
+      if (notificationidoff != null) {
+        notificationofficer.setNotificationToken(notificationidoff.getNotificationToken());
+      }
+      notificationofficer.setNotificationToken("");
+      notificationofficer.setNotificationStatus(false);
+      notificationofficer.setNotificationAssignTime(LocalDateTime.now());
+      notificationManagementRepo.save(notificationofficer);
+
+      if (notificationidoff != null) {
+        try {
+          service.send(
+              notificationidoff.getNotificationToken(),
+              status,
+              "Check You Duty Completion Status Over the Portal");
+        } catch (Exception e) {
+          log.error("FCM send failed for category {}", category.getId(), e);
+        }
+      } // system:
+        // free/available
       officerRepository.save(officer);
     }
 
     // 5. Mark VIP/category as Inactive (no active duty now)
     category.setStatus("Inactive");
     categoryRepository.save(category);
+    NotificationManagement notificationofficer = new NotificationManagement();
+    NotificationManagement notificationid = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(category.getId(),
+            "guard");
+    notificationofficer.setNotificationSenderId(category.getId());
+    notificationofficer.setNotificationSender("vip");
+    notificationofficer.setNotificationSenderName(category.getName());
+    notificationofficer.setNotificationMessage("Your duty Status is ----" + status);
+    if (notificationid != null) {
+      notificationofficer.setNotificationToken(notificationid.getNotificationToken());
+    }
+    notificationofficer.setNotificationStatus(false);
+    notificationofficer.setNotificationAssignTime(LocalDateTime.now());
+    notificationManagementRepo.save(notificationofficer);
 
+    if (notificationid != null) {
+      try {
+        service.send(
+            notificationid.getNotificationToken(),
+            status,
+            "Check You Duty Completion Status Over the Portal");
+      } catch (Exception e) {
+        log.error("FCM send failed for category {}", category.getId(), e);
+      }
+    }
     // 6. Return updated snapshot (will show no active duty)
     return getAssignmentResponseForCategory(categoryId);
   }

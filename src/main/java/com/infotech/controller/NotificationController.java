@@ -5,11 +5,11 @@ import java.util.List;
 
 import com.infotech.dto.NotificationSubscribeRequest;
 import com.infotech.entity.NotificationCategory;
-import com.infotech.entity.NotificationGuard;
 import com.infotech.entity.NotificationManagement;
 import com.infotech.repository.NotificationCategoryRepository;
 import com.infotech.repository.NotificationGuardRepository;
 import com.infotech.repository.NotificationManagementRepository;
+import com.infotech.service.FcmService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -31,10 +31,13 @@ public class NotificationController {
   private final NotificationGuardRepository notificationGuardRepository;
   private final NotificationCategoryRepository notificationCategoryRepository;
   private final NotificationManagementRepository notificationManagementRepository;
+  private final FcmService service;
 
-  @GetMapping("/guard/{id}")
-  public ResponseEntity<List<NotificationGuard>> getOfficerNotification(@PathVariable Long id) {
-    return ResponseEntity.ok(notificationGuardRepository.findByOfficer_Id(id));
+  @GetMapping("/{id}/{role}")
+  public ResponseEntity<List<NotificationManagement>> getOfficerNotification(@PathVariable Long id,
+      @PathVariable String role) {
+    return ResponseEntity
+        .ok(notificationManagementRepository.findByNotificationSenderIdAndNotificationSender(id, role));
   }
 
   @GetMapping("/vip/{id}")
@@ -43,11 +46,13 @@ public class NotificationController {
     return ResponseEntity.ok(notificationCategoryRepository.findByCategory_Id(id));
   }
 
-  @GetMapping("/guard/read/{id}")
-  public ResponseEntity<?> OfficerMarkAsRead(@PathVariable Long id) {
-    NotificationGuard noti = notificationGuardRepository.findById(id).orElseThrow();
-    noti.setRead(true);
-    notificationGuardRepository.save(noti);
+  @GetMapping("/read/{role}/{id}")
+  public ResponseEntity<?> OfficerMarkAsRead(@PathVariable String role, @PathVariable Long id) {
+    NotificationManagement noti = notificationManagementRepository.findByNotificationId(id);
+    noti.setNotificationStatus(true);
+    noti.setNotificationReadTime(LocalDateTime.now());
+    noti.setNotificationReadBy(role);
+    notificationManagementRepository.save(noti);
     return ResponseEntity.ok("Notification Marked As Read");
   }
 
@@ -65,19 +70,21 @@ public class NotificationController {
     return ResponseEntity.ok(noti);
   }
 
-  @GetMapping("/read/{id}/{role}")
-  public ResponseEntity<?> NotificationManagementRead(@PathVariable Long id, @PathVariable String role) {
-    NotificationManagement noti = notificationManagementRepository.findById(id).orElseThrow();
-    noti.setNotificationStatus(true);
-    noti.setNotificationReadTime(LocalDateTime.now());
-    noti.setNotificationReadBy(role);
-    notificationManagementRepository.save(noti);
-
-    return ResponseEntity.ok("Notification Marked As Read");
-  }
+  // @GetMapping("/read/{id}/{role}")
+  // public ResponseEntity<?> NotificationManagementRead(@PathVariable Long id,
+  // @PathVariable String role) {
+  // NotificationManagement noti =
+  // notificationManagementRepository.findById(id).orElseThrow();
+  // noti.setNotificationStatus(true);
+  // noti.setNotificationReadTime(LocalDateTime.now());
+  // noti.setNotificationReadBy(role);
+  // notificationManagementRepository.save(noti);
+  //
+  // return ResponseEntity.ok("Notification Marked As Read");
+  // }
 
   @PostMapping("/subscribe")
-  public String subscribe(@RequestBody NotificationSubscribeRequest req) {
+  public String subscribe(@RequestBody NotificationSubscribeRequest req) throws Exception {
 
     NotificationManagement notification = new NotificationManagement();
     notification.setNotificationSenderId(req.getNotificationSenderId());
@@ -89,7 +96,7 @@ public class NotificationController {
     notification.setNotificationAssignTime(LocalDateTime.now());
     notificationManagementRepository.save(notification);
 
-    // service.send(req.get("token"), req.get("title"), req.get("body"));
+    service.send(req.getNotificationToken(), "subscribed notification", req.getNotificationMessage());
     return "Notification sent";
   }
 

@@ -59,6 +59,7 @@ public class SecurityConfig {
                 "/api/categories/register/**",
                 "/api/officer/register/**",
                 "/api/assignments/**",
+                "/api/notification",
                 "/api/officer/unique-ranks",
                 "/usr/reg")
             .permitAll()

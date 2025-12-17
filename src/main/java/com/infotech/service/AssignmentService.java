@@ -20,8 +20,6 @@ import com.infotech.dto.GuardAssignmentRequest;
 import com.infotech.dto.GuardLevelRequest;
 import com.infotech.dto.OfficerDuty;
 import com.infotech.entity.Category;
-import com.infotech.entity.NotificationCategory;
-import com.infotech.entity.NotificationGuard;
 import com.infotech.entity.NotificationManagement;
 import com.infotech.entity.Officer;
 import com.infotech.entity.UserGuardAssignment;
@@ -55,7 +53,7 @@ public class AssignmentService {
   @PersistenceContext
   private EntityManager em;
 
-  private static final int MAX_REUSE = 4;
+  private static final int MAX_REUSE = 10;
 
   // -----------------------------------------------
   // assignGuardsAutomatically (unchanged)
@@ -204,53 +202,52 @@ public class AssignmentService {
         officer.setStatus("Active");
         officerRepository.save(officer);
 
+        // ✅ CORRECT: Look up token BEFORE creating new notification
+        NotificationManagement existingNotification = notificationManagementRepo
+            .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(officer.getId(),
+                "guard");
+
+        // ✅ Get token from existing record
+        String officerFcmToken = existingNotification != null
+            ? existingNotification.getNotificationToken()
+            : null;
+
+        // ✅ Send notification immediately
+        sendNotificationSafely(
+            officerFcmToken,
+            "Duty Assign",
+            "Go And Check Your Duty From The Portal",
+            "officer",
+            officer.getId());
+
         Optional<UserGuardAssignment> exist = inactivePrev
             .stream()
             .filter(a -> a.getOfficer().getId()
                 .equals(officer.getId()))
             .findFirst();
-        NotificationManagement notificationmana = notificationManagementRepo
-            .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(officer.getId(),
-                "guard");
 
+        // Create notification records (but use token from lookup)
         NotificationManagement notification = new NotificationManagement();
-        NotificationGuard notificationGuard = new NotificationGuard();
-        notificationGuard.setRead(false);
-        notificationGuard.setOfficer(officer);
-        notificationGuard.setMessage("New Duty Assign Please Check Your  Duty");
+        // NotificationGuard notificationGuard = new NotificationGuard();
+        // notificationGuard.setRead(false);
+        // notificationGuard.setOfficer(officer);
+        // notificationGuard.setMessage("New Duty Assign Please Check Your Duty");
+
         notification.setNotificationSenderId(officer.getId());
         notification.setNotificationSender("guard");
         notification.setNotificationSenderName(officer.getName());
         notification.setNotificationMessage("New Duty Assign Please Check Your  Duty");
-        if (notificationmana != null) {
-          notification.setNotificationToken(notificationmana.getNotificationToken());
-        }
+        notification.setNotificationToken(officerFcmToken); // Use the looked-up token
         notification.setNotificationStatus(false);
         notification.setNotificationAssignTime(LocalDateTime.now());
-        // service.send(notificationmana.getNotificationToken(), "Duty Assign", "Go And
-        // Check Your Duty From The Portal");
-        //
-        //
-        if (notificationmana != null) {
-          try {
-            service.send(
-                notificationmana.getNotificationToken(),
-                "Duty Assign",
-                "Go And Check Your Duty From The Portal");
-          } catch (Exception e) {
-            log.error("FCM send failed for officer {}", officer.getId(), e);
-          }
-        }
 
         notificationManagementRepo.save(notification);
-
-        notificationGuardRepository.save(notificationGuard);
+        // notificationGuardRepository.save(notificationGuard);
 
         UserGuardAssignment a;
         if (exist.isPresent()) {
           a = exist.get();
-          a.setTimesAssigned(a.getTimesAssigned()
-              + 1);
+          a.setTimesAssigned(a.getTimesAssigned() + 1);
         } else {
           a = new UserGuardAssignment();
           a.setCategory(category);
@@ -265,7 +262,6 @@ public class AssignmentService {
 
         created.add(a);
       }
-
       if (!created.isEmpty()) {
         responseDetails.addAll(assignmentRepository
             .saveAll(created));
@@ -283,48 +279,39 @@ public class AssignmentService {
       categoryRepository.save(category);
     }
 
-    NotificationManagement notificationman = notificationManagementRepo
+    // BEFORE creating new notification, look up existing token
+    NotificationManagement existingVipNotification = notificationManagementRepo
         .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(category.getId(), "vip");
 
-    NotificationManagement notificationcat = new NotificationManagement();
-    NotificationCategory notificationCategory = new NotificationCategory();
-    notificationCategory.setRead(false);
-    notificationCategory.setCategory(category);
-    notificationCategory.setMessage("New Duty Assign Please Check Your  Duty");
-    notificationCategoryRepository.save(notificationCategory);
+    String vipFcmToken = existingVipNotification != null
+        ? existingVipNotification.getNotificationToken()
+        : null;
 
+    // Send notification with existing token
+    sendNotificationSafely(
+        vipFcmToken,
+        "Duty Assign",
+        "For More Detail Check It From The Portal",
+        "category",
+        category.getId());
+
+    // THEN create new notification record
+    NotificationManagement notificationcat = new NotificationManagement();
     notificationcat.setNotificationSenderId(category.getId());
     notificationcat.setNotificationSender("vip");
     notificationcat.setNotificationSenderName(category.getName());
     notificationcat.setNotificationMessage("Duty Assign Successfully");
+    notificationcat.setNotificationToken(vipFcmToken); // Use looked-up token
     notificationcat.setNotificationStatus(false);
     notificationcat.setNotificationAssignTime(LocalDateTime.now());
+
     notificationManagementRepo.save(notificationcat);
-    if (notificationman != null) {
-      notificationcat.setNotificationToken(notificationman.getNotificationToken());
-    }
-
-    // service.send(notificationman.getNotificationToken(), "Duty Assign", "For More
-    // Detail Check It From The Portal");
-    if (notificationman != null) {
-      try {
-        service.send(
-            notificationman.getNotificationToken(),
-            "Duty Assign",
-            "For More Detail Check It From The Portal");
-      } catch (Exception e) {
-        log.error("FCM send failed for category {}", category.getId(), e);
-      }
-    }
-
     AssignmentResponse resp = new AssignmentResponse();
     resp.setSummary(summaries);
     resp.setDetails(responseDetails);
 
     return resp;
-  }
-
-  // -----------------------------------------------
+  } // -----------------------------------------------
   // getAssignmentResponseForCategory (unchanged)
   // -----------------------------------------------
   // inside AssignmentService
@@ -755,29 +742,24 @@ public class AssignmentService {
 
   @Transactional
   public AssignmentResponse completeDutyForCategory(Long categoryId, String status) {
-
     // 1. Load category
     Category category = categoryRepository.findById(categoryId)
         .orElseThrow(() -> new RuntimeException(
             "Category not found for id: " + categoryId));
 
-    // 2. Get all ACTIVE-DUTY assignments under this
-    // category
+    // 2. Get all ACTIVE-DUTY assignments under this category
     List<UserGuardAssignment> activeAssignments = assignmentRepository
         .findByCategoryIdAndStatusIgnoreCase(categoryId,
             ACTIVE_STATUS);
 
     if (activeAssignments.isEmpty()) {
-      // nothing active → mark
-      // VIP inactive and
-      // return empty
+      // nothing active → mark VIP inactive and return empty
       category.setStatus("Inactive");
       categoryRepository.save(category);
 
       AssignmentResponse resp = new AssignmentResponse();
       resp.setSummary(Collections.emptyList());
       resp.setDetails(Collections.emptyList());
-
       return resp;
     }
 
@@ -786,16 +768,8 @@ public class AssignmentService {
     Map<Long, Officer> officersToFree = new HashMap<>();
 
     for (UserGuardAssignment uga : activeAssignments) {
-      uga.setStatus(status); // or
-                             // "Inactive",
-                             // but
-                             // NOT
-                             // "Active
-                             // Duty"
-      uga.setAtEnd(now); // real
-                         // duty
-                         // end
-                         // time
+      uga.setStatus(status);
+      uga.setAtEnd(now);
       assignmentRepository.save(uga);
 
       Officer officer = uga.getOfficer();
@@ -804,68 +778,70 @@ public class AssignmentService {
       }
     }
 
-    // 4. Free all these officers
+    // 4. Free all these officers and send notifications
     for (Officer officer : officersToFree.values()) {
-      officer.setStatus("Inactive"); // in
+      officer.setStatus("Inactive");
+
       NotificationManagement notificationofficer = new NotificationManagement();
       NotificationManagement notificationidoff = notificationManagementRepo
           .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(officer.getId(),
               "guard");
+
       notificationofficer.setNotificationSenderId(officer.getId());
       notificationofficer.setNotificationSender("guard");
       notificationofficer.setNotificationSenderName(officer.getName());
       notificationofficer.setNotificationMessage("Your duty Status is ----" + status);
+
       if (notificationidoff != null) {
         notificationofficer.setNotificationToken(notificationidoff.getNotificationToken());
       }
-      notificationofficer.setNotificationToken("");
+
       notificationofficer.setNotificationStatus(false);
       notificationofficer.setNotificationAssignTime(LocalDateTime.now());
       notificationManagementRepo.save(notificationofficer);
 
-      if (notificationidoff != null) {
-        try {
-          service.send(
-              notificationidoff.getNotificationToken(),
-              status,
-              "Check You Duty Completion Status Over the Portal");
-        } catch (Exception e) {
-          log.error("FCM send failed for category {}", category.getId(), e);
-        }
-      } // system:
-        // free/available
+      // Use helper method to send notification
+      sendNotificationSafely(
+          notificationidoff != null ? notificationidoff.getNotificationToken() : null,
+          status,
+          "Check Your Duty Completion Status Over the Portal",
+          "officer",
+          officer.getId());
+
       officerRepository.save(officer);
     }
 
-    // 5. Mark VIP/category as Inactive (no active duty now)
+    // 5. Mark VIP/category as Inactive
     category.setStatus("Inactive");
     categoryRepository.save(category);
+
     NotificationManagement notificationofficer = new NotificationManagement();
     NotificationManagement notificationid = notificationManagementRepo
         .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(category.getId(),
-            "guard");
+            "vip");
+
     notificationofficer.setNotificationSenderId(category.getId());
     notificationofficer.setNotificationSender("vip");
     notificationofficer.setNotificationSenderName(category.getName());
     notificationofficer.setNotificationMessage("Your duty Status is ----" + status);
+
     if (notificationid != null) {
       notificationofficer.setNotificationToken(notificationid.getNotificationToken());
     }
+
     notificationofficer.setNotificationStatus(false);
     notificationofficer.setNotificationAssignTime(LocalDateTime.now());
     notificationManagementRepo.save(notificationofficer);
 
-    if (notificationid != null) {
-      try {
-        service.send(
-            notificationid.getNotificationToken(),
-            status,
-            "Check You Duty Completion Status Over the Portal");
-      } catch (Exception e) {
-        log.error("FCM send failed for category {}", category.getId(), e);
-      }
-    }
-    // 6. Return updated snapshot (will show no active duty)
+    // Use helper method to send notification
+    sendNotificationSafely(
+        notificationid != null ? notificationid.getNotificationToken() : null,
+        status,
+        "Check Your Duty Completion Status Over the Portal",
+        "category",
+        category.getId());
+
+    // 6. Return updated snapshot
     return getAssignmentResponseForCategory(categoryId);
   }
 
@@ -894,6 +870,26 @@ public class AssignmentService {
 
     // 1 guard left -> missing = 1
     return markGuardOnLeaveAndRefill(vipId, level, 1);
+  }
+
+  /**
+   * Safely send FCM notification with null/empty token validation
+   */
+  private void sendNotificationSafely(String token, String title, String body, String entityType, Long entityId) {
+    if (token == null || token.trim().isEmpty()) {
+      log.warn("Skipping FCM notification for {} {}: Token is null or empty", entityType, entityId);
+      return;
+    }
+
+    try {
+      service.send(token, title, body);
+      log.info("Successfully sent FCM notification to {} {}: {}   token is =={}==", entityType, entityId, title, token);
+    } catch (IllegalArgumentException e) {
+      // Specifically catch the token validation error
+      log.error("Invalid FCM token for {} {}: {}", entityType, entityId, e.getMessage());
+    } catch (Exception e) {
+      log.error("FCM send failed for {} {}: {}", entityType, entityId, e.getMessage(), e);
+    }
   }
 
 }

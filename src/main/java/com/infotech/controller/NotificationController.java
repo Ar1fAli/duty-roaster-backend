@@ -2,6 +2,7 @@ package com.infotech.controller;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import com.infotech.dto.NotificationSubscribeRequest;
 import com.infotech.entity.NotificationCategory;
@@ -97,6 +98,12 @@ public class NotificationController {
     notificationManagementRepository.save(notification);
 
     service.send(req.getNotificationToken(), "subscribed notification", req.getNotificationMessage());
+    return "Notification sent";
+  }
+
+  @PostMapping
+  public String notify(@RequestBody Map<String, String> req) throws Exception {
+    service.send(req.get("token"), req.get("title"), req.get("body"));
     return "Notification sent";
   }
 

@@ -15,6 +15,7 @@ import com.infotech.repository.LeaveRequestRepository;
 import com.infotech.repository.NotificationGuardRepository;
 import com.infotech.repository.NotificationManagementRepository;
 import com.infotech.service.AssignmentService;
+import com.infotech.service.FcmService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -38,6 +39,7 @@ public class DecisionController {
   private final AssignmentService assignmentService;
   private final NotificationGuardRepository notificationGuardRepository;
   private final NotificationManagementRepository notificationManagementRepo;
+  private final FcmService service;
 
   @PostMapping("/decision")
   public LeaveRequest createCategorye(@RequestBody LeaveRequest req) {
@@ -119,25 +121,74 @@ public class DecisionController {
   }
 
   @PostMapping("/accident")
-  public Accident createCategorye(@RequestBody Accident req) {
+  public Accident createAccident(@RequestBody Accident req) {
     System.out.println(req.getReq());
     System.out.println(req.getMessage());
     System.out.println(req.getGuardData());
+
+    req.setRequestTime(LocalDateTime.now());
     req.setRequestTime(LocalDateTime.now());
 
-    NotificationManagement notificationManagement = new NotificationManagement();
+    NotificationManagement existingNotification = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(req.getGuardData().getId(),
+            "guard");
 
-    notificationManagement.setNotificationSender("GUARD");
+    NotificationManagement existingNotificationUser = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "user");
+    NotificationManagement existingNotificationAdmin = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "admin");
+    // ✅ Get token from existing record
+    String officerFcmToken = existingNotification != null
+        ? existingNotification.getNotificationToken()
+        : null;
+
+    String userFcmToken = existingNotificationUser != null
+        ? existingNotificationUser.getNotificationToken()
+        : null;
+
+    Long userId = existingNotificationUser != null
+        ? existingNotificationUser.getNotificationSenderId()
+        : null;
+
+    String adminFcmToken = existingNotificationAdmin != null
+        ? existingNotificationAdmin.getNotificationToken()
+        : null;
+    Long adminId = existingNotificationAdmin != null
+        ? existingNotificationAdmin.getNotificationSenderId()
+        : null;
+
+    // ✅ Send notification immediately
+    service.sendNotificationSafely(
+        officerFcmToken,
+        "Incidnet Occur",
+        "Please Check The Incident From The Portal And Response it",
+        "officer",
+        req.getGuardData().getId());
+
+    service.sendNotificationSafely(
+        userFcmToken,
+        "Incidnet Occur",
+        "Please Check The Incident From The Portal And Response it",
+        "Manager",
+        userId);
+
+    service.sendNotificationSafely(
+        adminFcmToken,
+        "Duty Assign",
+        "Go And Check Your Duty From The Portal",
+        "admin",
+        adminId);
+
+    // Create notification records (but use token from lookup)
+    NotificationManagement notificationManagement = new NotificationManagement();
+    notificationManagement.setNotificationSender("guard");
     notificationManagement.setNotificationSenderId(req.getGuardData().getId());
     notificationManagement.setNotificationMessage("Guard is Decided For Duty Please Check Status");
     notificationManagement.setNotificationStatus(false);
     notificationManagement.setNotificationSenderName(req.getGuardData().getName());
-
     notificationManagement.setNotificationAssignTime(LocalDateTime.now());
-
+    notificationManagement.setNotificationToken(officerFcmToken); // Use the looked-up token
     notificationManagementRepo.save(notificationManagement);
-
-    req.setRequestTime(LocalDateTime.now());
 
     return accidentRepository.save(req);
   }
@@ -222,6 +273,7 @@ public class DecisionController {
       // 3) refill one guard for that VIP/category
       assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId);
     }
+
     NotificationGuard notificationOfficer = new NotificationGuard();
     notificationOfficer.setRead(false);
     notificationOfficer.setOfficer(acc.getGuardData());

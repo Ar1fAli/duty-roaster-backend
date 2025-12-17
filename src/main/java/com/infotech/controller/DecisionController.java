@@ -160,8 +160,8 @@ public class DecisionController {
     // ✅ Send notification immediately
     service.sendNotificationSafely(
         officerFcmToken,
-        "Incidnet Occur",
-        "Please Check The Incident From The Portal And Response it",
+        "Duty Assign",
+        "Go And Check Your Duty From The Portal",
         "officer",
         req.getGuardData().getId());
 
@@ -174,8 +174,8 @@ public class DecisionController {
 
     service.sendNotificationSafely(
         adminFcmToken,
-        "Duty Assign",
-        "Go And Check Your Duty From The Portal",
+        "Incidnet Occur",
+        "Please Check The Incident From The Portal And Response it",
         "admin",
         adminId);
 

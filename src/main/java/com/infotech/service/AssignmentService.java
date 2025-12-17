@@ -213,7 +213,7 @@ public class AssignmentService {
             : null;
 
         // ✅ Send notification immediately
-        sendNotificationSafely(
+        service.sendNotificationSafely(
             officerFcmToken,
             "Duty Assign",
             "Go And Check Your Duty From The Portal",
@@ -288,7 +288,7 @@ public class AssignmentService {
         : null;
 
     // Send notification with existing token
-    sendNotificationSafely(
+    service.sendNotificationSafely(
         vipFcmToken,
         "Duty Assign",
         "For More Detail Check It From The Portal",
@@ -801,7 +801,7 @@ public class AssignmentService {
       notificationManagementRepo.save(notificationofficer);
 
       // Use helper method to send notification
-      sendNotificationSafely(
+      service.sendNotificationSafely(
           notificationidoff != null ? notificationidoff.getNotificationToken() : null,
           status,
           "Check Your Duty Completion Status Over the Portal",
@@ -834,7 +834,7 @@ public class AssignmentService {
     notificationManagementRepo.save(notificationofficer);
 
     // Use helper method to send notification
-    sendNotificationSafely(
+    service.sendNotificationSafely(
         notificationid != null ? notificationid.getNotificationToken() : null,
         status,
         "Check Your Duty Completion Status Over the Portal",
@@ -875,21 +875,5 @@ public class AssignmentService {
   /**
    * Safely send FCM notification with null/empty token validation
    */
-  private void sendNotificationSafely(String token, String title, String body, String entityType, Long entityId) {
-    if (token == null || token.trim().isEmpty()) {
-      log.warn("Skipping FCM notification for {} {}: Token is null or empty", entityType, entityId);
-      return;
-    }
-
-    try {
-      service.send(token, title, body);
-      log.info("Successfully sent FCM notification to {} {}: {}   token is =={}==", entityType, entityId, title, token);
-    } catch (IllegalArgumentException e) {
-      // Specifically catch the token validation error
-      log.error("Invalid FCM token for {} {}: {}", entityType, entityId, e.getMessage());
-    } catch (Exception e) {
-      log.error("FCM send failed for {} {}: {}", entityType, entityId, e.getMessage(), e);
-    }
-  }
 
 }

@@ -61,6 +61,7 @@ public class SecurityConfig {
                 "/api/assignments/**",
                 "/api/notification",
                 "/api/officer/unique-ranks",
+                "/api/debug/env",
                 "/usr/reg")
             .permitAll()
             .anyRequest().authenticated())

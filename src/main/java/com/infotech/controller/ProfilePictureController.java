@@ -32,67 +32,68 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProfilePictureController {
 
-    private final CloudinaryService cloudinaryService;
-    private final ProfilePictureRepository pictureRepository;
-    private final CategoryRepository categoryRepository;
-    private final OfficerRepository officerRepository;
-    private final AdminRepsitory adminRepsitory;
-    private final UserRepository useRepository;
+  private final CloudinaryService cloudinaryService;
+  private final ProfilePictureRepository pictureRepository;
+  private final CategoryRepository categoryRepository;
+  private final OfficerRepository officerRepository;
+  private final AdminRepsitory adminRepsitory;
+  private final UserRepository useRepository;
 
-    @PostMapping(value = "/upload/{id}/{role}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> upload(@RequestParam("imaged") MultipartFile imaged,
-            @PathVariable Long id,
-            @PathVariable String role) throws Exception {
+  @PostMapping(value = "/upload/{id}/{role}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<String> upload(@RequestParam("imaged") MultipartFile imaged,
+      @PathVariable Long id,
+      @PathVariable String role) throws Exception {
 
-        ProfilePicture pic = new ProfilePicture();
-        pic.setUpdateTime(LocalDateTime.now());
+    ProfilePicture pic = new ProfilePicture();
+    pic.setUpdateTime(LocalDateTime.now());
 
-        String url = cloudinaryService.uploadFile(imaged);
-        pic.setUrl(url);
-        pic.setUpdaterId(id);
-        pic.setUpdatedby(role);
-        pictureRepository.save(pic);
+    String url = cloudinaryService.uploadFile(imaged);
 
-        System.out.println(role + " role is this ");
+    pic.setUrl(url);
+    pic.setUpdaterId(id);
+    pic.setUpdatedby(role);
+    pictureRepository.save(pic);
 
-        // safer: ignore case & trim spaces
-        String normalizedRole = role.trim();
+    // System.out.println(role + " role is this ");
 
-        if ("guard".equalsIgnoreCase(normalizedRole)) {
-            Officer offi = officerRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("guard data not found"));
-            offi.setPic(pic);
-            officerRepository.save(offi);
+    // safer: ignore case & trim spaces
+    String normalizedRole = role.trim();
 
-            System.out.println(offi + " officer is saved");
+    if ("guard".equalsIgnoreCase(normalizedRole)) {
+      Officer offi = officerRepository.findById(id)
+          .orElseThrow(() -> new RuntimeException("guard data not found"));
+      offi.setPic(pic);
+      officerRepository.save(offi);
 
-        } else if ("vip".equalsIgnoreCase(normalizedRole)) {
-            System.out.println("vip called ");
-            Category cate = categoryRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("vip not found"));
-            System.out.println(pic + " pic is this ");
-            cate.setPic(pic);
-            categoryRepository.save(cate);
+      // System.out.println(offi + " officer is saved");
 
-            System.out.println(cate + " category is saved ");
-        } else if ("admin".equalsIgnoreCase(normalizedRole)) {
-            System.out.println("admin executed");
-            AdminEntity admin = adminRepsitory.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Admin id is wrong correct admin please"));
-            admin.setPic(pic);
-            adminRepsitory.save(admin);
-            System.out.println(admin);
+    } else if ("vip".equalsIgnoreCase(normalizedRole)) {
+      // System.out.println("vip called ");
+      Category cate = categoryRepository.findById(id)
+          .orElseThrow(() -> new RuntimeException("vip not found"));
+      // System.out.println(pic + " pic is this ");
+      cate.setPic(pic);
+      categoryRepository.save(cate);
 
-        } else if ("user".equalsIgnoreCase(normalizedRole)) {
-            System.out.println("admin executed");
-            UserEntity admin = useRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Admin id is wrong correct admin please"));
-            admin.setPic(pic);
-            useRepository.save(admin);
-            System.out.println(admin);
+      // System.out.println(cate + " category is saved ");
+    } else if ("admin".equalsIgnoreCase(normalizedRole)) {
+      // System.out.println("admin executed");
+      AdminEntity admin = adminRepsitory.findById(id)
+          .orElseThrow(() -> new RuntimeException("Admin id is wrong correct admin please"));
+      admin.setPic(pic);
+      adminRepsitory.save(admin);
+      // System.out.println(admin);
 
-        }
+    } else if ("user".equalsIgnoreCase(normalizedRole)) {
+      System.out.println("admin executed");
+      UserEntity admin = useRepository.findById(id)
+          .orElseThrow(() -> new RuntimeException("Admin id is wrong correct admin please"));
+      admin.setPic(pic);
+      useRepository.save(admin);
+      // System.out.println(admin);
 
-        return ResponseEntity.ok(url);
     }
+
+    return ResponseEntity.ok(url);
+  }
 }

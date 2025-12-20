@@ -14,6 +14,7 @@ import com.infotech.repository.AccidentRepository;
 import com.infotech.repository.LeaveRequestRepository;
 import com.infotech.repository.NotificationGuardRepository;
 import com.infotech.repository.NotificationManagementRepository;
+import com.infotech.repository.OfficerRepository;
 import com.infotech.service.AssignmentService;
 import com.infotech.service.FcmService;
 
@@ -40,14 +41,49 @@ public class DecisionController {
   private final NotificationGuardRepository notificationGuardRepository;
   private final NotificationManagementRepository notificationManagementRepo;
   private final FcmService service;
+  private final OfficerRepository officerRepository;
 
   @PostMapping("/decision")
   public LeaveRequest createCategorye(@RequestBody LeaveRequest req) {
 
-    System.out.println(req.getStatus());
-    System.out.println(req.getMessage());
-    System.out.println(req.getOfficer());
+    // System.out.println(req.getStatus());
+    // System.out.println(req.getMessage());
+    // System.out.println(req.getOfficer());
     req.setCurrent(true);
+
+    NotificationManagement existingNotificationUser = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "user");
+    NotificationManagement existingNotificationAdmin = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "admin");
+    String userFcmToken = existingNotificationUser != null
+        ? existingNotificationUser.getNotificationToken()
+        : null;
+
+    Long userId = existingNotificationUser != null
+        ? existingNotificationUser.getNotificationSenderId()
+        : null;
+
+    String adminFcmToken = existingNotificationAdmin != null
+        ? existingNotificationAdmin.getNotificationToken()
+        : null;
+    Long adminId = existingNotificationAdmin != null
+        ? existingNotificationAdmin.getNotificationSenderId()
+        : null;
+
+    // ✅ Send notification immediately
+    service.sendNotificationSafely(
+        userFcmToken,
+        "Duty Decided",
+        "Please Check The Duty Decision ",
+        "Manager",
+        userId);
+
+    service.sendNotificationSafely(
+        adminFcmToken,
+        "Duty Decided",
+        "Please Check The Duty Decision ",
+        "admin",
+        adminId);
 
     NotificationManagement notificationManagement = new NotificationManagement();
 
@@ -69,18 +105,20 @@ public class DecisionController {
   @PostMapping("/decision/management")
   public ResponseEntity<LeaveRequest> decideLeave(@RequestBody LeaveReq req) {
 
-    System.out.println("status is " + req.getStatus());
-    System.out.println("id is " + req.getId());
+    // System.out.println("status is " + req.getStatus());
+    // System.out.println("id is " + req.getId());
 
     LeaveRequest leave = leaveRequestRepository.findById(req.getId())
         .orElseThrow(() -> new RuntimeException("LeaveRequest not found with id: " + req.getId()));
 
     // keep old status so we only trigger once
     String oldStatus = leave.getStatus();
+    int val = 1;
 
     leave.setStatus(req.getStatus());
     leave.setCurrent(true);
     leave.setResponseTime(LocalDateTime.now());
+    System.out.println(req.getReason() + "reason is this");
 
     // accepted statuses
     boolean isNowAccepted = "admin_accepted".equalsIgnoreCase(req.getStatus())
@@ -91,6 +129,7 @@ public class DecisionController {
     //
     // only trigger operation when changing from NOT accepted -> accepted
     if (isNowAccepted) {
+      System.out.println("Assignment called accept called");
 
       // 🔹 adjust this depending on your LeaveRequest entity:
       // e.g. leave.getOfficer() or leave.getGuardData()
@@ -98,6 +137,15 @@ public class DecisionController {
 
       if (officer == null || officer.getId() == null) {
         throw new RuntimeException("No guard linked to leave request id: " + req.getId());
+      } else {
+
+        List<Officer> availableofficer = officerRepository.findByStatusAndRank("Inactive", officer.getRank());
+        if (availableofficer.isEmpty() && req.isForceapply() == false) {
+          throw new RuntimeException("No Officer Is Available ");
+        } else if (req.isForceapply() == true) {
+
+          val = 0;
+        }
       }
 
       Long officerId = officer.getId();
@@ -106,8 +154,26 @@ public class DecisionController {
       // 1) mark the guard's last active assignment as Inactive
       // 2) set guard status = Inactive
       // 3) refill one guard for that VIP/category
-      assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId);
+      assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId,
+          req.getReason(), req.getStatus(), leave.getMessage(), val);
+      System.out.println("Mark as leave called");
     }
+
+    NotificationManagement existingNotification = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(leave.getOfficer().getId(),
+            "guard");
+
+    // ✅ Get token from existing record
+    String officerFcmToken = existingNotification != null
+        ? existingNotification.getNotificationToken()
+        : null;
+
+    service.sendNotificationSafely(
+        officerFcmToken,
+        "Your Request is Updated ",
+        "Go And Check The Duty Status From The Portal ",
+        "officer",
+        leave.getOfficer().getId());
 
     NotificationGuard notificationOfficer = new NotificationGuard();
     notificationOfficer.setRead(false);
@@ -122,9 +188,9 @@ public class DecisionController {
 
   @PostMapping("/accident")
   public Accident createAccident(@RequestBody Accident req) {
-    System.out.println(req.getReq());
-    System.out.println(req.getMessage());
-    System.out.println(req.getGuardData());
+    // System.out.println(req.getReq());
+    // System.out.println(req.getMessage());
+    // System.out.println(req.getGuardData());
 
     req.setRequestTime(LocalDateTime.now());
     req.setRequestTime(LocalDateTime.now());
@@ -133,15 +199,22 @@ public class DecisionController {
         .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(req.getGuardData().getId(),
             "guard");
 
-    NotificationManagement existingNotificationUser = notificationManagementRepo
-        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "user");
-    NotificationManagement existingNotificationAdmin = notificationManagementRepo
-        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "admin");
     // ✅ Get token from existing record
     String officerFcmToken = existingNotification != null
         ? existingNotification.getNotificationToken()
         : null;
 
+    service.sendNotificationSafely(
+        officerFcmToken,
+        "Duty Assign",
+        "Go And Check Your Duty From The Portal",
+        "officer",
+        req.getGuardData().getId());
+
+    NotificationManagement existingNotificationUser = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "user");
+    NotificationManagement existingNotificationAdmin = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "admin");
     String userFcmToken = existingNotificationUser != null
         ? existingNotificationUser.getNotificationToken()
         : null;
@@ -158,13 +231,6 @@ public class DecisionController {
         : null;
 
     // ✅ Send notification immediately
-    service.sendNotificationSafely(
-        officerFcmToken,
-        "Duty Assign",
-        "Go And Check Your Duty From The Portal",
-        "officer",
-        req.getGuardData().getId());
-
     service.sendNotificationSafely(
         userFcmToken,
         "Incidnet Occur",
@@ -237,6 +303,9 @@ public class DecisionController {
 
     System.out.println("id is this " + req.getId());
     System.out.println("req is this " + req.getReq());
+    System.out.println("request is this " + req.getReason());
+
+    int val = 1;
 
     Accident acc = accidentRepository.findById(req.getId())
         .orElseThrow(() -> new RuntimeException(
@@ -259,20 +328,47 @@ public class DecisionController {
     // only trigger when changing from NOT accepted -> accepted
     if (!isNowAccepted) {
 
-      Officer guard = acc.getGuardData();
-      if (guard == null || guard.getId() == null) {
+      Officer officer = acc.getGuardData();
+      if (officer == null || officer.getId() == null) {
         throw new RuntimeException(
             "No guard linked to accident id: " + req.getId());
+      } else {
+
+        List<Officer> availableofficer = officerRepository.findByStatusAndRank("Inactive", officer.getRank());
+        if (availableofficer.isEmpty() && req.isForceapply() == false) {
+          throw new RuntimeException("No Officer Is Available ");
+        } else if (req.isForceapply() == true) {
+
+          val = 0;
+        }
+
       }
 
-      Long officerId = guard.getId();
+      Long officerId = officer.getId();
 
       // this will:
       // 1) mark guard's active assignment Inactive
       // 2) set guard status = Inactive
       // 3) refill one guard for that VIP/category
-      assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId);
+      assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId, req.getReason(), req.getReq(), acc.getMessage(),
+          val);
     }
+
+    NotificationManagement existingNotification = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(acc.getGuardData().getId(),
+            "guard");
+
+    // ✅ Get token from existing record
+    String officerFcmToken = existingNotification != null
+        ? existingNotification.getNotificationToken()
+        : null;
+
+    service.sendNotificationSafely(
+        officerFcmToken,
+        "Incident Request Updated",
+        "Go And Check The Incident Status From The Portal ",
+        "officer",
+        acc.getGuardData().getId());
 
     NotificationGuard notificationOfficer = new NotificationGuard();
     notificationOfficer.setRead(false);

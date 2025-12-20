@@ -354,10 +354,12 @@ import java.util.function.BiConsumer;
 import com.infotech.dto.OfficerRequestDto;
 import com.infotech.dto.OfficerResponseDto;
 import com.infotech.entity.HistoryManagement;
+import com.infotech.entity.NotificationManagement;
 import com.infotech.entity.Officer;
 import com.infotech.exception.BadRequestException;
 import com.infotech.exception.ResourceNotFoundException;
 import com.infotech.repository.HistoryManagementRepository;
+import com.infotech.repository.NotificationManagementRepository;
 import com.infotech.repository.OfficerRepository;
 
 import org.springframework.data.domain.Page;
@@ -380,6 +382,8 @@ public class OfficerService {
   private final OfficerRepository officerRepository;
   private final HistoryManagementRepository historyManagementRepository;
   private final PasswordEncoder encoder;
+  private final NotificationManagementRepository notificationManagementRepository;
+  private final FcmService service;
 
   // ─────────────── MAPPERS ───────────────
 
@@ -502,6 +506,9 @@ public class OfficerService {
     if (officerDto.getRank() == null || officerDto.getRank().isBlank()) {
       throw new BadRequestException("Rank is required");
     }
+    if (officerDto.getStatus() == null || officerDto.getStatus().isBlank()) {
+      throw new BadRequestException("Rank is required");
+    }
     if (officerDto.getContactno() == null) {
       throw new BadRequestException("Contact No is required");
     }
@@ -537,7 +544,6 @@ public class OfficerService {
     }
 
     // No soft-deleted match → normal create
-    officer.setStatus(STATUS_ACTIVE);
     officer.setPassword(encoder.encode(officer.getPassword()));
 
     Officer saved = officerRepository.save(officer);
@@ -545,6 +551,39 @@ public class OfficerService {
     // history: CREATE
     logHistory("CREATE", "GUARD", saved.getId(), operatedBy,
         "status", null, STATUS_ACTIVE);
+    if (officerDto.getStatus().equals("self")) {
+      // Log DELETE
+      //
+      //
+      //
+      NotificationManagement existingNotificationAdmin = notificationManagementRepository
+          .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "admin");
+      String adminFcmToken = existingNotificationAdmin != null
+          ? existingNotificationAdmin.getNotificationToken()
+          : null;
+      Long adminId = existingNotificationAdmin != null
+          ? existingNotificationAdmin.getNotificationSenderId()
+          : null;
+
+      service.sendNotificationSafely(
+          adminFcmToken,
+          "New Guard Self Registration",
+          "New Guard Self Registration Just Happen Please Update Its Status",
+          "admin",
+          adminId);
+
+      NotificationManagement notification = new NotificationManagement();
+      notification.setNotificationSenderId(officer.getId());
+      notification.setNotificationSender("Self Registration");
+      notification.setNotificationSenderName(officerDto.getName());
+      notification.setNotificationMessage("New Guard Self Registration Just Happen Please Check Its Status");
+      notification.setNotificationStatus(false);
+      notification.setNotificationAssignTime(LocalDateTime.now());
+      notificationManagementRepository.save(notification);
+
+      logHistory("DELETE", "vip", saved.getId(), operatedBy,
+          "status", STATUS_ACTIVE, STATUS_DELETED);
+    }
 
     return toDto(saved);
   }

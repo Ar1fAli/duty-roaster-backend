@@ -82,8 +82,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
       UserData userData = user.get(); // <-- extract the entity
 
-      System.out.println(userData.getUsername());
-      System.out.println(userData.getPassword());
+      // System.out.println(userData.getUsername());
+      // System.out.println(userData.getPassword());
 
       return buildUser(
           userData.getUsername(),
@@ -112,22 +112,28 @@ public class CustomUserDetailsService implements UserDetailsService {
     var officerOpt = officerRepository.findByUsername(username);
     if (officerOpt.isPresent()) {
       var officer = officerOpt.get();
-      return buildUser(
-          officer.getUsername(),
-          officer.getPassword(),
-          "GUARD" // or officer.getRole()
-      );
+      if (!officer.getStatus().equals("self")) {
+        return buildUser(
+            officer.getUsername(),
+            officer.getPassword(),
+            "GUARD" // or officer.getRole()
+        );
+
+      }
     }
 
     // 3. Try VIP / category table
     var catOpt = categoryRepository.findByUsername(username);
     if (catOpt.isPresent()) {
       var cat = catOpt.get();
-      return buildUser(
-          cat.getUsername(),
-          cat.getPassword(),
-          "VIP" // or cat.getRole()
-      );
+      if (!cat.getStatus().equals("self")) {
+        return buildUser(
+            cat.getUsername(),
+            cat.getPassword(),
+            "VIP" // or cat.getRole()
+        );
+
+      }
     }
 
     // 3. Try VIP / category table
@@ -146,9 +152,9 @@ public class CustomUserDetailsService implements UserDetailsService {
 
   private UserDetails buildUser(String username, String password, String role) {
 
-    System.out.println(username);
-    System.out.println(password);
-    System.out.println(role);
+    // System.out.println(username);
+    // System.out.println(password);
+    // System.out.println(role);
     return User.builder()
         .username(username)
         .password(password) // must be encoded

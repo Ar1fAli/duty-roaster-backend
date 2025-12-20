@@ -1,6 +1,6 @@
 package com.infotech.controller;
 
-import java.util.List;
+import jakarta.transaction.Transactional;
 
 import com.infotech.entity.AssignmentValue;
 import com.infotech.entity.SecurityType;
@@ -18,26 +18,26 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/api/setting")
 public class SettingController {
-    private final SecurityTypeRepository securityTypeRepository;
-    private final AssignmentValueRepository assignmentValueRepository;
+  private final SecurityTypeRepository securityTypeRepository;
+  private final AssignmentValueRepository assignmentValueRepository;
 
-    @PostMapping("/set")
-    public Long setSecurityType(@RequestBody SecurityType security) {
-        SecurityType sec = new SecurityType();
-        sec.setName(security.getName());
-        System.out.println(security + " security is this value ");
-        List<AssignmentValue> values = security.getValues().stream()
-                .map(d -> AssignmentValue.builder()
-                        .rank(d.getRank())
-                        .value(d.getValue())
-                        .type(sec) // or savedSec if you saved it above
-                        .build())
-                .toList();
+  @PostMapping("/set")
+  @Transactional
+  public void setSecurityType(@RequestBody SecurityType req) {
 
-        sec.setValues(values); // or ensure list initialized and use addAll
+    SecurityType sec = new SecurityType();
+    sec.setName(req.getName());
 
-        SecurityType saved = securityTypeRepository.save(sec);
-        return saved.getId();
-    }
+    // ✅ SAVE PARENT FIRST
+    SecurityType sec2 = securityTypeRepository.save(sec);
+
+    req.getValues().forEach(value -> {
+      AssignmentValue av = new AssignmentValue();
+      av.setValue(value.getValue());
+      av.setRank(value.getRank());
+      av.setType(sec2); // now managed entity
+      assignmentValueRepository.save(av);
+    });
+  }
 
 }

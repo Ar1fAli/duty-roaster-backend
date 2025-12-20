@@ -53,7 +53,7 @@ public class AdminController {
     profile.setContactNo(admin.getContactNo());
     profile.setRole(admin.getRole());
     if (admin.getPic() != null) {
-      System.out.println("null invocked");
+      // System.out.println("null invocked");
       profile.setUrl(admin.getPic().getUrl());
     }
     return ResponseEntity.ok(profile);

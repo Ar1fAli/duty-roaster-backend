@@ -71,38 +71,40 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface OfficerRepository extends JpaRepository<Officer, Long> {
 
-    // Basic lookups
-    Optional<Officer> findByUsername(String username);
+  // Basic lookups
+  Optional<Officer> findByUsername(String username);
 
-    // Lookups that consider a specific status (used for restore / soft-delete
-    // logic)
-    Optional<Officer> findByUsernameAndStatus(String username, String status);
+  // Lookups that consider a specific status (used for restore / soft-delete
+  // logic)
+  Optional<Officer> findByUsernameAndStatus(String username, String status);
 
-    Optional<Officer> findByEmailAndStatus(String email, String status);
+  Optional<Officer> findByEmailAndStatus(String email, String status);
 
-    Optional<Officer> findByContactnoAndStatus(Long contactno, String status);
+  Optional<Officer> findByContactnoAndStatus(Long contactno, String status);
 
-    // Lookups that ignore a given status (used by uniqueness checks to ignore
-    // soft-deleted rows)
-    Optional<Officer> findByUsernameAndStatusNot(String username, String status);
+  // Lookups that ignore a given status (used by uniqueness checks to ignore
+  // soft-deleted rows)
+  Optional<Officer> findByUsernameAndStatusNot(String username, String status);
 
-    Optional<Officer> findByEmailAndStatusNot(String email, String status);
+  Optional<Officer> findByEmailAndStatusNot(String email, String status);
 
-    Optional<Officer> findByContactnoAndStatusNot(Long contactno, String status);
+  Optional<Officer> findByContactnoAndStatusNot(Long contactno, String status);
 
-    // Boolean-style existence helpers (optional but handy)
-    boolean existsByUsernameAndStatusNot(String username, String status);
+  // Boolean-style existence helpers (optional but handy)
+  boolean existsByUsernameAndStatusNot(String username, String status);
 
-    boolean existsByEmailAndStatusNot(String email, String status);
+  boolean existsByEmailAndStatusNot(String email, String status);
 
-    boolean existsByContactnoAndStatusNot(Long contactno, String status);
+  boolean existsByContactnoAndStatusNot(Long contactno, String status);
 
-    // Paging / filtering used by service.getOfficers(...)
-    Page<Officer> findByStatusAndRank(String status, String rank, Pageable pageable);
+  // Paging / filtering used by service.getOfficers(...)
+  Page<Officer> findByStatusAndRank(String status, String rank, Pageable pageable);
 
-    Page<Officer> findByStatus(String status, Pageable pageable);
+  List<Officer> findByStatusAndRank(String status, String rank);
 
-    Page<Officer> findByRank(String rank, Pageable pageable);
+  Page<Officer> findByStatus(String status, Pageable pageable);
 
-    List<Officer> findByRank(String rank);
+  Page<Officer> findByRank(String rank, Pageable pageable);
+
+  List<Officer> findByRank(String rank);
 }

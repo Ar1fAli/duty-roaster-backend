@@ -566,10 +566,12 @@ import java.util.function.BiConsumer;
 
 import com.infotech.entity.Category;
 import com.infotech.entity.HistoryManagement;
+import com.infotech.entity.NotificationManagement;
 import com.infotech.exception.BadRequestException;
 import com.infotech.exception.ResourceNotFoundException;
 import com.infotech.repository.CategoryRepository;
 import com.infotech.repository.HistoryManagementRepository;
+import com.infotech.repository.NotificationManagementRepository;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -586,6 +588,8 @@ public class CategoryService {
   private final CategoryRepository categoryRepository;
   private final HistoryManagementRepository historyManagementRepository;
   private final PasswordEncoder encoder;
+  private final NotificationManagementRepository notificationManagementRepository;
+  private final FcmService service;
 
   // ───────────────────────────── UNIQUE FIELD VALIDATION
   // ─────────────────────────────
@@ -658,6 +662,9 @@ public class CategoryService {
     if (newCategory.getDesignation() == null || newCategory.getDesignation().isBlank()) {
       throw new BadRequestException("Designation is required");
     }
+    if (newCategory.getStatus() == null || newCategory.getStatus().isBlank()) {
+      throw new BadRequestException("Status is required");
+    }
 
     // uniqueness check for create (ignoreId = null)
     validateUniqueFields(newCategory, null);
@@ -687,16 +694,49 @@ public class CategoryService {
     }
 
     // No soft-deleted match → create new
-    newCategory.setStatus(STATUS_ACTIVE);
     newCategory.setPassword(encoder.encode(newCategory.getPassword()));
 
     Category saved = categoryRepository.save(newCategory);
-    System.out.println(saved + "  category created ");
 
     // Log CREATE
-    logHistory("CREATE", "VIP", saved.getId(), operatedBy,
-        "status", null, STATUS_ACTIVE);
+    if (newCategory.getStatus().equals("self")) {
+      // Log DELETE
+      //
+      //
+      //
+      NotificationManagement existingNotificationAdmin = notificationManagementRepository
+          .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "admin");
+      String adminFcmToken = existingNotificationAdmin != null
+          ? existingNotificationAdmin.getNotificationToken()
+          : null;
+      Long adminId = existingNotificationAdmin != null
+          ? existingNotificationAdmin.getNotificationSenderId()
+          : null;
 
+      service.sendNotificationSafely(
+          adminFcmToken,
+          "New Vip Self Registration",
+          "New Vip Self Registration Just Happen Please Update Its Status",
+          "admin",
+          adminId);
+
+      NotificationManagement notification = new NotificationManagement();
+      notification.setNotificationSenderId(newCategory.getId());
+      notification.setNotificationSender("Self Registration");
+      notification.setNotificationSenderName(newCategory.getName());
+      notification.setNotificationMessage("New Vip Self Registration Just Happen Please Check Its Status");
+      notification.setNotificationToken(null);
+      notification.setNotificationStatus(false);
+      notification.setNotificationAssignTime(LocalDateTime.now());
+      notificationManagementRepository.save(notification);
+      logHistory("CREATE", "vip", saved.getId(), operatedBy,
+          "status", null, "self");
+
+    } else {
+      logHistory("CREATE", "vip", saved.getId(), operatedBy,
+          "status", null, STATUS_ACTIVE);
+
+    }
     return saved;
   }
 

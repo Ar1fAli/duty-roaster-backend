@@ -229,7 +229,7 @@ public class CategoryController {
   // CREATE or RESTORE
   @PostMapping("/register/{role}")
   public ResponseEntity<Category> createCategory(@RequestBody Category newCategory, @PathVariable String role) {
-    System.out.println("category called");
+    // System.out.println("category called");
     Category saved = categoryService.createOrRestoreCategory(newCategory, role);
     return ResponseEntity.ok(saved);
   }
@@ -261,10 +261,10 @@ public class CategoryController {
     res.setUsername(admindata.getUsername());
     res.setStatus(admindata.getStatus());
     res.setContactno(admindata.getContactno());
-    System.out.println(admindata.getPic() + "pic id value");
+    // System.out.println(admindata.getPic() + "pic id value");
     if (admindata.getPic() != null) {
       res.setUrl(admindata.getPic().getUrl());
-      System.out.println(admindata.getPic().getUrl() + "pic Url value ");
+      // System.out.println(admindata.getPic().getUrl() + "pic Url value ");
     }
     return res;
   }

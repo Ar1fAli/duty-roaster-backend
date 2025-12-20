@@ -92,13 +92,13 @@ public class AssignmentController {
 
   @GetMapping("/guard/{officerId}/history")
   public List<UserGuardAssignment> getGuardHistory(@PathVariable Long officerId) {
-    System.out.println(officerId);
+    // System.out.println(officerId);
     return assignmentService.getGuardHistory(officerId);
   }
 
   @GetMapping("/vip/{categoryId}/history")
   public List<UserGuardAssignment> getVipHistory(@PathVariable Long categoryId) {
-    System.out.println(categoryId);
+    // System.out.println(categoryId);
     return assignmentService.getVipHistory(categoryId);
   }
 

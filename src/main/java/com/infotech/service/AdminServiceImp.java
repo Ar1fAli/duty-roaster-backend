@@ -211,15 +211,15 @@ public class AdminServiceImp implements AdminService {
   @Override
   public LoginResponse login(Logindat loginDto) {
     try {
-      System.out.println(loginDto.getUsername());
-      System.out.println(loginDto.getPassword());
+      // System.out.println(loginDto.getUsername());
+      // System.out.println(loginDto.getPassword());
 
       Authentication authentication = authManager.authenticate(
           new UsernamePasswordAuthenticationToken(
               loginDto.getUsername(),
               loginDto.getPassword()));
 
-      System.out.println("working");
+      // System.out.println("working");
 
       String fullRole = authentication.getAuthorities()
           .stream()
@@ -237,7 +237,7 @@ public class AdminServiceImp implements AdminService {
       return res;
 
     } catch (Exception e) {
-      System.out.println("Login failed: " + e.getMessage());
+      // System.out.println("Login failed: " + e.getMessage());
       throw new RuntimeException("Invalid username or password");
     }
   }
@@ -348,7 +348,8 @@ public class AdminServiceImp implements AdminService {
 
       // ============== PASSWORD (special) ==============
       String newRawPassword = admindat.getAdminPassword();
-      System.out.println(newRawPassword + " new and old password " + admin.getUserData().getPassword());
+      // System.out.println(newRawPassword + " new and old password " +
+      // admin.getUserData().getPassword());
       if (newRawPassword != null && !newRawPassword.isBlank()) {
 
         boolean sameAsOld = encoder.matches(newRawPassword, admin.getUserData().getPassword());

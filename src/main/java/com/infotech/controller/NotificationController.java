@@ -43,7 +43,7 @@ public class NotificationController {
 
   @GetMapping("/vip/{id}")
   public ResponseEntity<List<NotificationCategory>> getCategoryNotification(@PathVariable Long id) {
-    System.out.println("vip id is this " + id);
+    // System.out.println("vip id is this " + id);
     return ResponseEntity.ok(notificationCategoryRepository.findByCategory_Id(id));
   }
 

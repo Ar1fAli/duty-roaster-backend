@@ -94,7 +94,6 @@
 
 package com.infotech.controller;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import com.infotech.dto.GuardProfileResponse;
@@ -162,6 +161,10 @@ public class OfficerController {
     if (offi.getPic() != null) {
       res.setUrl(offi.getPic().getUrl());
     }
+    res.setExperience(offi.getExperience());
+    res.setAdharNo(offi.getAdharNo());
+    res.setPnNumber(offi.getPnNumber());
+    res.setGender(offi.getGender());
     return res;
 
   }
@@ -176,7 +179,6 @@ public class OfficerController {
   @PostMapping("/register/{role}")
   public ResponseEntity<OfficerResponseDto> createOfficer(@RequestBody OfficerRequestDto officerDto,
       @PathVariable String role) {
-    officerDto.setCreatedTime(LocalDateTime.now());
     OfficerResponseDto saved = officerService.createOrRestoreOfficer(officerDto, role);
     return ResponseEntity.ok(saved);
   }

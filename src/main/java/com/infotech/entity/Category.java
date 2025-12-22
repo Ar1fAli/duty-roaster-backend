@@ -24,21 +24,23 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Category {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    private Long contactno;
+  private Long contactno;
 
-    private String name;
-    private String email;
-    private String username;
-    private String password;
-    private String designation;
-    private String status;
+  private String name;
+  private String email;
+  private String username;
+  private String password;
+  private String designation;
+  private String status;
+  private Long adharNo;
+  private String gender;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "profile_id", nullable = true)
-    @JsonIgnore
-    private ProfilePicture pic;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "profile_id", nullable = true)
+  @JsonIgnore
+  private ProfilePicture pic;
 }

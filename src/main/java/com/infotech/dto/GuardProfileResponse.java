@@ -14,6 +14,12 @@ public class GuardProfileResponse {
   private String url;
   private String rank;
 
+  private String gender;
+  private Long experience;
+
+  private Long pnNumber;
+  private Long adharNo;
+
   // private String reqstatus;
   // private String reasonmes;
 

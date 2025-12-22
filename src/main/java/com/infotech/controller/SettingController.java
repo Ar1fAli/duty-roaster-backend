@@ -1,5 +1,7 @@
 package com.infotech.controller;
 
+import java.util.List;
+
 import jakarta.transaction.Transactional;
 
 import com.infotech.entity.AssignmentValue;
@@ -7,6 +9,7 @@ import com.infotech.entity.SecurityType;
 import com.infotech.repository.AssignmentValueRepository;
 import com.infotech.repository.SecurityTypeRepository;
 
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,6 +41,12 @@ public class SettingController {
       av.setType(sec2); // now managed entity
       assignmentValueRepository.save(av);
     });
+  }
+
+  @GetMapping("/getsecuritygroup")
+  public List<SecurityType> getAllSecurityTypes() {
+    List<SecurityType> securityType = securityTypeRepository.findAll();
+    return securityType;
   }
 
 }

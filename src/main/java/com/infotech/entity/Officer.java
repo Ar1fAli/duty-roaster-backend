@@ -24,23 +24,26 @@ import lombok.NoArgsConstructor;
 @Table(name = "officer")
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Officer {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    private String name;
-    private String password;
-    private String username;
-    private String email;
-    private String rank;
-    private String status;
-    private LocalDateTime createdTime;
-    // private String reqstatus;
-    // private String reasonmes;
+  private String name;
+  private String password;
+  private String username;
+  private String email;
+  private String rank;
+  private String status;
+  private LocalDateTime createdTime;
+  private String gender;
+  private Long pnNumber;
+  private Long adharNo;
+  // private String reqstatus;
+  // private String reasonmes;
 
-    private Long experience;
-    private Long contactno;
-    @OneToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
-    private ProfilePicture pic;
+  private Long experience;
+  private Long contactno;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JsonIgnore
+  private ProfilePicture pic;
 }

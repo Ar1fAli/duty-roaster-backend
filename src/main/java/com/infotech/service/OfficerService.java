@@ -389,6 +389,7 @@ public class OfficerService {
 
   private OfficerResponseDto toDto(Officer officer) {
     OfficerResponseDto dto = new OfficerResponseDto();
+
     dto.setId(officer.getId());
     dto.setName(officer.getName());
     dto.setUsername(officer.getUsername());
@@ -397,19 +398,32 @@ public class OfficerService {
     dto.setStatus(officer.getStatus());
     dto.setExperience(officer.getExperience());
     dto.setContactno(officer.getContactno());
+
+    // 🔹 NEW
+    dto.setGender(officer.getGender());
+    dto.setPnNumber(officer.getPnNumber());
+    dto.setAdharNo(officer.getAdharNo());
+
     return dto;
   }
 
   private Officer fromCreateDto(OfficerRequestDto dto) {
     Officer o = new Officer();
+
     o.setName(dto.getName());
     o.setUsername(dto.getUsername());
     o.setEmail(dto.getEmail());
     o.setRank(dto.getRank());
-    o.setStatus(dto.getStatus()); // may be null; service sets default
+    o.setStatus(dto.getStatus());
     o.setExperience(dto.getExperience());
     o.setContactno(dto.getContactno());
     o.setPassword(dto.getPassword());
+
+    // 🔹 NEW
+    o.setGender(dto.getGender());
+    o.setPnNumber(dto.getPnNumber());
+    o.setAdharNo(dto.getAdharNo());
+    o.setCreatedTime(LocalDateTime.now());
 
     return o;
   }
@@ -484,6 +498,7 @@ public class OfficerService {
             throw new BadRequestException("Contact number already exists");
           });
     }
+
   }
 
   // ─────────────── CREATE / RESTORE ───────────────
@@ -508,6 +523,18 @@ public class OfficerService {
     }
     if (officerDto.getStatus() == null || officerDto.getStatus().isBlank()) {
       throw new BadRequestException("Rank is required");
+    }
+
+    if (officerDto.getGender() == null || officerDto.getGender().isBlank()) {
+      throw new BadRequestException("Gender is required");
+    }
+
+    if (officerDto.getPnNumber() == null) {
+      throw new BadRequestException("PNO number is required");
+    }
+
+    if (officerDto.getAdharNo() == null) {
+      throw new BadRequestException("Adhar number is required");
     }
     if (officerDto.getContactno() == null) {
       throw new BadRequestException("Contact No is required");
@@ -651,7 +678,8 @@ public class OfficerService {
       h.setOperationType("UPDATE");
       h.setOperatedBy(operatedBy);
       h.setOperatorId(id);
-      h.setEntityName("Guard");
+      h.setEntityName("Officer");
+
       h.setFieldName(fieldName);
       h.setOldValue(oldVal == null ? null : oldVal.toString());
       h.setNewValue(newVal == null ? null : newVal.toString());
@@ -722,6 +750,30 @@ public class OfficerService {
       officer.setUsername(updatedDto.getUsername());
     }
 
+    if (updatedDto.getGender() != null && !updatedDto.getGender().isBlank()) {
+      logChange.accept("gender", new Object[] {
+          officer.getGender(),
+          updatedDto.getGender()
+      });
+      officer.setGender(updatedDto.getGender());
+    }
+
+    if (updatedDto.getPnNumber() != null) {
+      logChange.accept("pnNumber", new Object[] {
+          officer.getPnNumber(),
+          updatedDto.getPnNumber()
+      });
+      officer.setPnNumber(updatedDto.getPnNumber());
+    }
+
+    if (updatedDto.getAdharNo() != null) {
+      logChange.accept("adharNo", new Object[] {
+          officer.getAdharNo(),
+          "UPDATED"
+      });
+      officer.setAdharNo(updatedDto.getAdharNo());
+    }
+
     // password (only if provided & changed)
     String newRawPassword = updatedDto.getPassword();
     if (newRawPassword != null && !newRawPassword.isBlank()) {
@@ -734,7 +786,7 @@ public class OfficerService {
         h.setOperationType("UPDATE");
         h.setOperatedBy(operatedBy);
         h.setOperatorId(id);
-        h.setEntityName("GUARD");
+        h.setEntityName("Officer");
         h.setFieldName("password");
         h.setOldValue(null);
         h.setNewValue("UPDATED");
@@ -802,4 +854,5 @@ public class OfficerService {
 
     return uniqueRanks;
   }
+
 }

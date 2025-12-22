@@ -17,6 +17,7 @@ public class NotificationManagement {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long notificationId;
   private Long notificationSenderId;
+  private Long notificationReceiverId;
 
   private String notificationSender;
   private String notificationSenderName;

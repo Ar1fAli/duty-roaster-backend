@@ -24,6 +24,7 @@ import com.infotech.entity.NotificationManagement;
 import com.infotech.entity.Officer;
 import com.infotech.entity.ReplacedOfficerEntity;
 import com.infotech.entity.UserGuardAssignment;
+import com.infotech.repository.AdminRepsitory;
 import com.infotech.repository.CategoryRepository;
 import com.infotech.repository.NotificationCategoryRepository;
 import com.infotech.repository.NotificationGuardRepository;
@@ -31,6 +32,7 @@ import com.infotech.repository.NotificationManagementRepository;
 import com.infotech.repository.OfficerRepository;
 import com.infotech.repository.ReplacedOfficerRepository;
 import com.infotech.repository.UserGuardAssignmentRepository;
+import com.infotech.repository.UserRepository;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +52,8 @@ public class AssignmentService {
   private final NotificationGuardRepository notificationGuardRepository;
   private final NotificationManagementRepository notificationManagementRepo;
   private final ReplacedOfficerRepository replacedOfficerRepository;
+  private final UserRepository userRepository;
+  private final AdminRepsitory adminRepsitory;
 
   private final FcmService service;
 
@@ -309,6 +313,26 @@ public class AssignmentService {
     notificationcat.setNotificationAssignTime(LocalDateTime.now());
 
     notificationManagementRepo.save(notificationcat);
+
+    NotificationManagement notificationadmin = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1l, "admin");
+
+    String adminFcmToken = notificationadmin != null
+        ? notificationadmin.getNotificationToken()
+        : null;
+    if (notificationadmin != null) {
+      NotificationManagement notificationtoadmin = new NotificationManagement();
+      notificationtoadmin.setNotificationSenderId(1l);
+      notificationtoadmin.setNotificationSender("admin");
+      notificationtoadmin.setNotificationSenderName(notificationadmin.getNotificationSenderName());
+      notificationtoadmin.setNotificationMessage("Duty Assign Successfully");
+      notificationtoadmin.setNotificationToken(adminFcmToken); // Use looked-up token
+      notificationtoadmin.setNotificationStatus(false);
+      notificationtoadmin.setNotificationAssignTime(LocalDateTime.now());
+
+      notificationManagementRepo.save(notificationtoadmin);
+
+    }
     AssignmentResponse resp = new AssignmentResponse();
     resp.setSummary(summaries);
     resp.setDetails(responseDetails);
@@ -881,44 +905,6 @@ public class AssignmentService {
 
       notificationofficer.setNotificationStatus(false);
       notificationofficer.setNotificationAssignTime(LocalDateTime.now());
-      notificationManagementRepo.save(notificationofficer);
-      if (true) {
-        NotificationManagement existingNotificationUser = notificationManagementRepo
-            .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "user");
-        NotificationManagement existingNotificationAdmin = notificationManagementRepo
-            .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "admin");
-        String userFcmToken = existingNotificationUser != null
-            ? existingNotificationUser.getNotificationToken()
-            : null;
-
-        Long userId = existingNotificationUser != null
-            ? existingNotificationUser.getNotificationSenderId()
-            : null;
-
-        String adminFcmToken = existingNotificationAdmin != null
-            ? existingNotificationAdmin.getNotificationToken()
-            : null;
-        Long adminId = existingNotificationAdmin != null
-            ? existingNotificationAdmin.getNotificationSenderId()
-            : null;
-
-        // ✅ Send notification immediately
-        service.sendNotificationSafely(
-            userFcmToken,
-            "Duty completion status updated",
-            "Please Check The Stauts by the portal ",
-            "Manager",
-            userId);
-
-        service.sendNotificationSafely(
-            adminFcmToken,
-            "Duty completion status updated",
-            "Please Check The Stauts by the portal ",
-            "admin",
-            adminId);
-      }
-
-      // Use helper method to send notification
       service.sendNotificationSafely(
           notificationidoff != null ? notificationidoff.getNotificationToken() : null,
           status,
@@ -926,7 +912,71 @@ public class AssignmentService {
           "officer",
           officer.getId());
 
+      notificationManagementRepo.save(notificationofficer);
       officerRepository.save(officer);
+    }
+    if (true) {
+      NotificationManagement existingNotificationUser = notificationManagementRepo
+          .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "user");
+      NotificationManagement notificationuser = new NotificationManagement();
+      notificationuser.setNotificationSenderId(existingNotificationUser.getNotificationSenderId());
+      notificationuser.setNotificationSender("user");
+      notificationuser.setNotificationSenderName(existingNotificationUser.getNotificationSenderName());
+      notificationuser.setNotificationMessage("duty status of the vip is changed" + category.getName());
+
+      if (existingNotificationUser != null) {
+        existingNotificationUser.setNotificationToken(existingNotificationUser.getNotificationToken());
+      }
+
+      notificationuser.setNotificationStatus(false);
+      notificationuser.setNotificationAssignTime(LocalDateTime.now());
+      notificationManagementRepo.save(notificationuser);
+      NotificationManagement existingNotificationAdmin = notificationManagementRepo
+          .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "admin");
+      NotificationManagement notificationadmin = new NotificationManagement();
+      notificationadmin.setNotificationSenderId(existingNotificationAdmin.getNotificationSenderId());
+      notificationadmin.setNotificationSender("admin");
+      notificationadmin.setNotificationSenderName(existingNotificationAdmin.getNotificationSenderName());
+      notificationadmin.setNotificationMessage("duty status of the vip is changed" + category.getName());
+
+      if (existingNotificationAdmin != null) {
+        existingNotificationAdmin.setNotificationToken(existingNotificationAdmin.getNotificationToken());
+      }
+
+      notificationadmin.setNotificationStatus(false);
+      notificationadmin.setNotificationAssignTime(LocalDateTime.now());
+      notificationManagementRepo.save(notificationadmin);
+      String userFcmToken = existingNotificationUser != null
+          ? existingNotificationUser.getNotificationToken()
+          : null;
+
+      Long userId = existingNotificationUser != null
+          ? existingNotificationUser.getNotificationSenderId()
+          : null;
+
+      String adminFcmToken = existingNotificationAdmin != null
+          ? existingNotificationAdmin.getNotificationToken()
+          : null;
+      Long adminId = existingNotificationAdmin != null
+          ? existingNotificationAdmin.getNotificationSenderId()
+          : null;
+
+      // ✅ Send notification immediately
+      service.sendNotificationSafely(
+          userFcmToken,
+          "Duty completion status updated",
+          "Please Check The Stauts by the portal ",
+          "Manager",
+          userId);
+
+      service.sendNotificationSafely(
+          adminFcmToken,
+          "Duty completion status updated",
+          "Please Check The Stauts by the portal ",
+          "admin",
+          adminId);
+
+      // Use helper method to send notification
     }
 
     // 5. Mark VIP/category as Inactive

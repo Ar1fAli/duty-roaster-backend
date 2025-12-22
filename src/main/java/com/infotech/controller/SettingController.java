@@ -49,4 +49,9 @@ public class SettingController {
     return securityType;
   }
 
+  @GetMapping("/getsecuritygroup/{id}")
+  public SecurityType getSecurityType(Long id) {
+    return securityTypeRepository.findById(id).get();
+  }
+
 }

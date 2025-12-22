@@ -51,40 +51,71 @@ public class DecisionController {
     // System.out.println(req.getOfficer());
     req.setCurrent(true);
 
-    NotificationManagement existingNotificationUser = notificationManagementRepo
-        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "user");
-    NotificationManagement existingNotificationAdmin = notificationManagementRepo
-        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "admin");
-    String userFcmToken = existingNotificationUser != null
-        ? existingNotificationUser.getNotificationToken()
-        : null;
+    if (true) {
+      NotificationManagement existingNotificationUser = notificationManagementRepo
+          .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "user");
+      NotificationManagement notificationuser = new NotificationManagement();
+      notificationuser.setNotificationSenderId(existingNotificationUser.getNotificationSenderId());
+      notificationuser.setNotificationSender("user");
+      notificationuser.setNotificationSenderName(existingNotificationUser.getNotificationSenderName());
+      notificationuser.setNotificationMessage("decision is taken placed by" + req.getOfficer().getName());
 
-    Long userId = existingNotificationUser != null
-        ? existingNotificationUser.getNotificationSenderId()
-        : null;
+      if (existingNotificationUser != null) {
+        existingNotificationUser.setNotificationToken(existingNotificationUser.getNotificationToken());
+      }
 
-    String adminFcmToken = existingNotificationAdmin != null
-        ? existingNotificationAdmin.getNotificationToken()
-        : null;
-    Long adminId = existingNotificationAdmin != null
-        ? existingNotificationAdmin.getNotificationSenderId()
-        : null;
+      notificationuser.setNotificationStatus(false);
+      notificationuser.setNotificationAssignTime(LocalDateTime.now());
+      notificationManagementRepo.save(notificationuser);
+      NotificationManagement existingNotificationAdmin = notificationManagementRepo
+          .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "admin");
+      NotificationManagement notificationadmin = new NotificationManagement();
+      notificationadmin.setNotificationSenderId(existingNotificationAdmin.getNotificationSenderId());
+      notificationadmin.setNotificationSender("admin");
+      notificationadmin.setNotificationSenderName(existingNotificationAdmin.getNotificationSenderName());
+      notificationadmin.setNotificationMessage("decision is taken placed by " + req.getOfficer().getName());
+
+      if (existingNotificationAdmin != null) {
+        existingNotificationAdmin.setNotificationToken(existingNotificationAdmin.getNotificationToken());
+      }
+
+      notificationadmin.setNotificationStatus(false);
+      notificationadmin.setNotificationAssignTime(LocalDateTime.now());
+      notificationManagementRepo.save(notificationadmin);
+      String userFcmToken = existingNotificationUser != null
+          ? existingNotificationUser.getNotificationToken()
+          : null;
+
+      Long userId = existingNotificationUser != null
+          ? existingNotificationUser.getNotificationSenderId()
+          : null;
+
+      String adminFcmToken = existingNotificationAdmin != null
+          ? existingNotificationAdmin.getNotificationToken()
+          : null;
+      Long adminId = existingNotificationAdmin != null
+          ? existingNotificationAdmin.getNotificationSenderId()
+          : null;
+
+      // ✅ Send notification immediately
+      service.sendNotificationSafely(
+          userFcmToken,
+          "Duty Decided",
+          "Please Check The Duty Decision ",
+          "Manager",
+          userId);
+
+      service.sendNotificationSafely(
+          adminFcmToken,
+          "Duty Decided",
+          "Please Check The Duty Decision ",
+          "admin",
+          adminId);
+
+      // Use helper method to send notification
+    }
 
     // ✅ Send notification immediately
-    service.sendNotificationSafely(
-        userFcmToken,
-        "Duty Decided",
-        "Please Check The Duty Decision ",
-        "Manager",
-        userId);
-
-    service.sendNotificationSafely(
-        adminFcmToken,
-        "Duty Decided",
-        "Please Check The Duty Decision ",
-        "admin",
-        adminId);
-
     NotificationManagement notificationManagement = new NotificationManagement();
 
     notificationManagement.setNotificationSender("GUARD");
@@ -211,6 +242,70 @@ public class DecisionController {
         "officer",
         req.getGuardData().getId());
 
+    if (true) {
+      NotificationManagement existingNotificationUser = notificationManagementRepo
+          .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "user");
+      NotificationManagement notificationuser = new NotificationManagement();
+      notificationuser.setNotificationSenderId(existingNotificationUser.getNotificationSenderId());
+      notificationuser.setNotificationSender("user");
+      notificationuser.setNotificationSenderName(existingNotificationUser.getNotificationSenderName());
+      notificationuser.setNotificationMessage("decision is taken placed by" + req.getGuardData().getName());
+
+      if (existingNotificationUser != null) {
+        existingNotificationUser.setNotificationToken(existingNotificationUser.getNotificationToken());
+      }
+
+      notificationuser.setNotificationStatus(false);
+      notificationuser.setNotificationAssignTime(LocalDateTime.now());
+      notificationManagementRepo.save(notificationuser);
+      NotificationManagement existingNotificationAdmin = notificationManagementRepo
+          .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "admin");
+      NotificationManagement notificationadmin = new NotificationManagement();
+      notificationadmin.setNotificationSenderId(existingNotificationAdmin.getNotificationSenderId());
+      notificationadmin.setNotificationSender("admin");
+      notificationadmin.setNotificationSenderName(existingNotificationAdmin.getNotificationSenderName());
+      notificationadmin.setNotificationMessage("decision is taken placed by " + req.getGuardData().getName());
+
+      if (existingNotificationAdmin != null) {
+        existingNotificationAdmin.setNotificationToken(existingNotificationAdmin.getNotificationToken());
+      }
+
+      notificationadmin.setNotificationStatus(false);
+      notificationadmin.setNotificationAssignTime(LocalDateTime.now());
+      notificationManagementRepo.save(notificationadmin);
+      String userFcmToken = existingNotificationUser != null
+          ? existingNotificationUser.getNotificationToken()
+          : null;
+
+      Long userId = existingNotificationUser != null
+          ? existingNotificationUser.getNotificationSenderId()
+          : null;
+
+      String adminFcmToken = existingNotificationAdmin != null
+          ? existingNotificationAdmin.getNotificationToken()
+          : null;
+      Long adminId = existingNotificationAdmin != null
+          ? existingNotificationAdmin.getNotificationSenderId()
+          : null;
+
+      // ✅ Send notification immediately
+      // Use helper method to send notification
+      service.sendNotificationSafely(
+          userFcmToken,
+          "Incidnet Occur",
+          "Please Check The Incident From The Portal And Response it",
+          "Manager",
+          userId);
+
+      service.sendNotificationSafely(
+          adminFcmToken,
+          "Incidnet Occur",
+          "Please Check The Incident From The Portal And Response it",
+          "admin",
+          adminId);
+
+    }
+
     NotificationManagement existingNotificationUser = notificationManagementRepo
         .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "user");
     NotificationManagement existingNotificationAdmin = notificationManagementRepo
@@ -231,20 +326,6 @@ public class DecisionController {
         : null;
 
     // ✅ Send notification immediately
-    service.sendNotificationSafely(
-        userFcmToken,
-        "Incidnet Occur",
-        "Please Check The Incident From The Portal And Response it",
-        "Manager",
-        userId);
-
-    service.sendNotificationSafely(
-        adminFcmToken,
-        "Incidnet Occur",
-        "Please Check The Incident From The Portal And Response it",
-        "admin",
-        adminId);
-
     // Create notification records (but use token from lookup)
     NotificationManagement notificationManagement = new NotificationManagement();
     notificationManagement.setNotificationSender("guard");

@@ -15,6 +15,8 @@ public interface NotificationManagementRepository extends JpaRepository<Notifica
 
   NotificationManagement findByNotificationId(Long notificationId);
 
+  List<NotificationManagement> findByNotificationSender(String sender);
+
   NotificationManagement findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(
       Long notificationSenderId,
       String notificationSender);

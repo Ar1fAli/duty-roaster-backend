@@ -107,4 +107,50 @@ public class NotificationController {
     return "Notification sent";
   }
 
+  @GetMapping("/read/all/{role}/{senderId}")
+  public ResponseEntity<?> OfficerMarkAllAsRead(
+      @PathVariable String role,
+      @PathVariable Long senderId) {
+
+    List<NotificationManagement> notifications = notificationManagementRepository
+        .findByNotificationSenderIdAndNotificationSender(senderId, role);
+
+    if (notifications.isEmpty()) {
+      return ResponseEntity.ok("No notifications found");
+    }
+
+    LocalDateTime now = LocalDateTime.now();
+
+    for (NotificationManagement noti : notifications) {
+      noti.setNotificationStatus(true);
+      noti.setNotificationReadTime(now);
+      noti.setNotificationReadBy(role);
+    }
+
+    notificationManagementRepository.saveAll(notifications);
+    return ResponseEntity.ok("All Notifications Marked As Read");
+  }
+
+  @GetMapping("/read/all/{role}")
+  public ResponseEntity<?> markAllAsReadByRole(@PathVariable String role) {
+
+    List<NotificationManagement> notifications = notificationManagementRepository
+        .findByNotificationSender(role);
+
+    if (notifications.isEmpty()) {
+      return ResponseEntity.ok("No unread notifications");
+    }
+
+    LocalDateTime now = LocalDateTime.now();
+
+    for (NotificationManagement noti : notifications) {
+      noti.setNotificationStatus(true);
+      noti.setNotificationReadTime(now);
+      noti.setNotificationReadBy(role); // admin or manager
+    }
+
+    notificationManagementRepository.saveAll(notifications);
+    return ResponseEntity.ok("All notifications marked as read by " + role);
+  }
+
 }

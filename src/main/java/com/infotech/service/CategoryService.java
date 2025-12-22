@@ -630,6 +630,16 @@ public class CategoryService {
             throw new BadRequestException("Contact number already exists");
           });
     }
+
+    // adharNo uniqueness
+    if (dto.getAdharNo() != null) {
+      categoryRepository.findByAdharNoAndStatusNot(dto.getAdharNo(), STATUS_DELETED)
+          .filter(c -> !Objects.equals(c.getId(), ignoreId))
+          .ifPresent(c -> {
+            throw new BadRequestException("Aadhaar number already exists");
+          });
+    }
+
   }
 
   // ───────────────────────────── CREATE / RESTORE ─────────────────────────────
@@ -665,6 +675,19 @@ public class CategoryService {
     if (newCategory.getStatus() == null || newCategory.getStatus().isBlank()) {
       throw new BadRequestException("Status is required");
     }
+    if (newCategory.getGender() == null || newCategory.getGender().isBlank()) {
+      throw new BadRequestException("Gender cannot be empty");
+    }
+
+    if (newCategory.getAdharNo() == null) {
+      throw new BadRequestException("Adhar number is required");
+    }
+
+    List<String> allowed = List.of("male", "female", "other");
+
+    if (!allowed.contains(newCategory.getGender().toLowerCase())) {
+      throw new BadRequestException("Gender must be Male, Female or Other");
+    }
 
     // uniqueness check for create (ignoreId = null)
     validateUniqueFields(newCategory, null);
@@ -683,6 +706,8 @@ public class CategoryService {
       deletedCat.setContactno(newCategory.getContactno());
       deletedCat.setUsername(newCategory.getUsername());
       deletedCat.setPassword(encoder.encode(newCategory.getPassword()));
+      deletedCat.setAdharNo(newCategory.getAdharNo());
+      deletedCat.setGender(newCategory.getGender());
 
       Category restored = categoryRepository.save(deletedCat);
 
@@ -860,6 +885,22 @@ public class CategoryService {
             updatedCategory.getUsername()
         });
         category.setUsername(updatedCategory.getUsername());
+      }
+
+      if (updatedCategory.getAdharNo() != null) {
+        logChange.accept("adharNo", new Object[] {
+            category.getAdharNo(),
+            updatedCategory.getAdharNo()
+        });
+        category.setAdharNo(updatedCategory.getAdharNo());
+      }
+
+      if (updatedCategory.getGender() != null && !updatedCategory.getGender().isBlank()) {
+        logChange.accept("gender", new Object[] {
+            category.getGender(),
+            updatedCategory.getGender()
+        });
+        category.setGender(updatedCategory.getGender());
       }
 
       // 🔹 password (only if user sent a new one & it's actually different)

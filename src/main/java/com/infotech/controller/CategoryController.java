@@ -266,6 +266,8 @@ public class CategoryController {
       res.setUrl(admindata.getPic().getUrl());
       // System.out.println(admindata.getPic().getUrl() + "pic Url value ");
     }
+    res.setAdharNo(admindata.getAdharNo());
+    res.setGender(admindata.getGender());
     return res;
   }
 

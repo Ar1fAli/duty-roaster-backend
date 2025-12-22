@@ -107,4 +107,9 @@ public interface OfficerRepository extends JpaRepository<Officer, Long> {
   Page<Officer> findByRank(String rank, Pageable pageable);
 
   List<Officer> findByRank(String rank);
+
+  Optional<Officer> findByAdharNoAndStatusNot(Long adharNo, String status);
+
+  Optional<Officer> findByPnNumberAndStatusNot(Long pnNumber, String status);
+
 }

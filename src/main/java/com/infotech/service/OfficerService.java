@@ -499,6 +499,24 @@ public class OfficerService {
           });
     }
 
+    // pnNumber
+    if (dto.getPnNumber() != null) {
+      officerRepository.findByPnNumberAndStatusNot(dto.getPnNumber(), STATUS_DELETED)
+          .filter(o -> !Objects.equals(o.getId(), ignoreId))
+          .ifPresent(o -> {
+            throw new BadRequestException("PN Number already exists");
+          });
+    }
+
+    // adharNo
+    if (dto.getAdharNo() != null) {
+      officerRepository.findByAdharNoAndStatusNot(dto.getAdharNo(), STATUS_DELETED)
+          .filter(o -> !Objects.equals(o.getId(), ignoreId))
+          .ifPresent(o -> {
+            throw new BadRequestException("Adhar Number already exists");
+          });
+    }
+
   }
 
   // ─────────────── CREATE / RESTORE ───────────────

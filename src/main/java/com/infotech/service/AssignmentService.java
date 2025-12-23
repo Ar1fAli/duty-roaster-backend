@@ -19,10 +19,12 @@ import com.infotech.dto.AssignmentSummary;
 import com.infotech.dto.GuardAssignmentRequest;
 import com.infotech.dto.GuardLevelRequest;
 import com.infotech.dto.OfficerDuty;
+import com.infotech.entity.AdminEntity;
 import com.infotech.entity.Category;
 import com.infotech.entity.NotificationManagement;
 import com.infotech.entity.Officer;
 import com.infotech.entity.ReplacedOfficerEntity;
+import com.infotech.entity.UserEntity;
 import com.infotech.entity.UserGuardAssignment;
 import com.infotech.repository.AdminRepsitory;
 import com.infotech.repository.CategoryRepository;
@@ -53,7 +55,7 @@ public class AssignmentService {
   private final NotificationManagementRepository notificationManagementRepo;
   private final ReplacedOfficerRepository replacedOfficerRepository;
   private final UserRepository userRepository;
-  private final AdminRepsitory adminRepsitory;
+  private final AdminRepsitory adminRepository;
 
   private final FcmService service;
 
@@ -314,25 +316,27 @@ public class AssignmentService {
 
     notificationManagementRepo.save(notificationcat);
 
+    AdminEntity admin = adminRepository.findById(1L).orElse(null);
     NotificationManagement notificationadmin = notificationManagementRepo
         .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1l, "admin");
 
     String adminFcmToken = notificationadmin != null
         ? notificationadmin.getNotificationToken()
         : null;
+    NotificationManagement notificationtoadmin = new NotificationManagement();
+    notificationtoadmin.setNotificationSenderId(admin.getId());
+    notificationtoadmin.setNotificationSender("admin");
+    notificationtoadmin.setNotificationSenderName(admin.getAdminName());
+    notificationtoadmin
+        .setNotificationMessage("Duty Assign Successfully For The Vip And Name Is ==>  " + category.getName());
     if (notificationadmin != null) {
-      NotificationManagement notificationtoadmin = new NotificationManagement();
-      notificationtoadmin.setNotificationSenderId(1l);
-      notificationtoadmin.setNotificationSender("admin");
-      notificationtoadmin.setNotificationSenderName(notificationadmin.getNotificationSenderName());
-      notificationtoadmin.setNotificationMessage("Duty Assign Successfully");
       notificationtoadmin.setNotificationToken(adminFcmToken); // Use looked-up token
-      notificationtoadmin.setNotificationStatus(false);
-      notificationtoadmin.setNotificationAssignTime(LocalDateTime.now());
-
-      notificationManagementRepo.save(notificationtoadmin);
-
     }
+    notificationtoadmin.setNotificationStatus(false);
+    notificationtoadmin.setNotificationAssignTime(LocalDateTime.now());
+
+    notificationManagementRepo.save(notificationtoadmin);
+
     AssignmentResponse resp = new AssignmentResponse();
     resp.setSummary(summaries);
     resp.setDetails(responseDetails);
@@ -916,28 +920,35 @@ public class AssignmentService {
       officerRepository.save(officer);
     }
     if (true) {
+
+      UserEntity user = userRepository.findById(1L).orElse(null);
       NotificationManagement existingNotificationUser = notificationManagementRepo
           .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "user");
-      NotificationManagement notificationuser = new NotificationManagement();
-      notificationuser.setNotificationSenderId(existingNotificationUser.getNotificationSenderId());
-      notificationuser.setNotificationSender("user");
-      notificationuser.setNotificationSenderName(existingNotificationUser.getNotificationSenderName());
-      notificationuser.setNotificationMessage("duty status of the vip is changed" + category.getName());
+      if (user != null) {
+        NotificationManagement notificationuser = new NotificationManagement();
+        notificationuser.setNotificationSenderId(user.getId());
+        notificationuser.setNotificationSender("user");
+        notificationuser.setNotificationSenderName(user.getName());
+        notificationuser
+            .setNotificationMessage("duty status of the vip is changed where vip name is ==>  " + category.getName());
 
+        notificationuser.setNotificationStatus(false);
+        notificationuser.setNotificationAssignTime(LocalDateTime.now());
+        notificationManagementRepo.save(notificationuser);
+      }
       if (existingNotificationUser != null) {
         existingNotificationUser.setNotificationToken(existingNotificationUser.getNotificationToken());
       }
 
-      notificationuser.setNotificationStatus(false);
-      notificationuser.setNotificationAssignTime(LocalDateTime.now());
-      notificationManagementRepo.save(notificationuser);
+      AdminEntity admin = adminRepository.findById(1L).orElse(null);
       NotificationManagement existingNotificationAdmin = notificationManagementRepo
           .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "admin");
       NotificationManagement notificationadmin = new NotificationManagement();
-      notificationadmin.setNotificationSenderId(existingNotificationAdmin.getNotificationSenderId());
+      notificationadmin.setNotificationSenderId(admin.getId());
       notificationadmin.setNotificationSender("admin");
-      notificationadmin.setNotificationSenderName(existingNotificationAdmin.getNotificationSenderName());
-      notificationadmin.setNotificationMessage("duty status of the vip is changed" + category.getName());
+      notificationadmin.setNotificationSenderName(admin.getAdminName());
+      notificationadmin
+          .setNotificationMessage("duty status of the vip is changed where vip name is ==>  " + category.getName());
 
       if (existingNotificationAdmin != null) {
         existingNotificationAdmin.setNotificationToken(existingNotificationAdmin.getNotificationToken());

@@ -63,6 +63,7 @@ public class SecurityConfig {
                 "/api/officer/unique-ranks",
                 "api/categories/unique-designation",
                 "/api/debug/env",
+                "/api/profile/upload/**",
                 "/usr/reg")
             .permitAll()
             .anyRequest().authenticated())

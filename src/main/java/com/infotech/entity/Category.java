@@ -43,4 +43,9 @@ public class Category {
   @JoinColumn(name = "profile_id", nullable = true)
   @JsonIgnore
   private ProfilePicture pic;
+
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_guard_assignment_id")
+  @JsonIgnore
+  private UserGuardAssignment userGuardAssignment;
 }

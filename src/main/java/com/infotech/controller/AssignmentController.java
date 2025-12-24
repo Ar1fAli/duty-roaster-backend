@@ -3,9 +3,10 @@ package com.infotech.controller;
 import java.util.List;
 
 import com.infotech.dto.AssignmentResponse;
+import com.infotech.dto.AssignmentResponsedto;
 import com.infotech.dto.GuardAssignmentRequest;
+import com.infotech.dto.GuardDutyHistorydto;
 import com.infotech.dto.OfficerDuty;
-import com.infotech.entity.Officer;
 import com.infotech.entity.UserGuardAssignment;
 import com.infotech.service.AssignmentService;
 import com.infotech.service.FcmService;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
@@ -48,8 +48,8 @@ public class AssignmentController {
    * < requested.
    */
   @GetMapping("/{categoryId}")
-  public ResponseEntity<AssignmentResponse> getAssignmentsForCategory(@PathVariable Long categoryId) {
-    AssignmentResponse response = assignmentService.getAssignmentResponseForCategory(categoryId);
+  public ResponseEntity<AssignmentResponsedto> getAssignmentsForCategory(@PathVariable Long categoryId) {
+    AssignmentResponsedto response = assignmentService.getAssignmentResponseForCategory(categoryId);
     return ResponseEntity.ok(response);
   }
 
@@ -57,47 +57,49 @@ public class AssignmentController {
   public OfficerDuty getVipForGuard(@PathVariable Long guardId) {
     return assignmentService.getVipForGuard(guardId);
   }
+  //
+  // @PostMapping("/{assignmentId}/leave")
+  // public AssignmentResponse markGuardOnLeave(
+  // @PathVariable Long assignmentId,
+  // @RequestBody GuardAssignmentRequest requirement) {
+  //
+  // return assignmentService.markGuardOnLeaveAndRefillit(assignmentId,
+  // requirement);
+  // }
 
-  @PostMapping("/{assignmentId}/leave")
-  public AssignmentResponse markGuardOnLeave(
-      @PathVariable Long assignmentId,
-      @RequestBody GuardAssignmentRequest requirement) {
-
-    return assignmentService.markGuardOnLeaveAndRefillit(assignmentId, requirement);
-  }
-
-  @PostMapping("/refill")
-  public ResponseEntity<AssignmentResponse> refillMissingGuards(
-      @RequestParam("vipId") Long vipId,
-      @RequestParam("level") String level,
-      @RequestParam("missing") int missing) {
-
-    AssignmentResponse response = assignmentService.markGuardOnLeaveAndRefill(vipId, level, missing);
-    return ResponseEntity.ok(response);
-  }
-
-  @PostMapping("/{vipId}/refill")
-  public AssignmentResponse refillGuards(
-      @PathVariable Long vipId,
-      @RequestBody GuardAssignmentRequest request) {
-
-    return assignmentService.refillMissingGuards(vipId, request);
-  }
-
-  @GetMapping("/getallguard")
-  public List<UserGuardAssignment> getHistory(@RequestBody Officer officer) {
-    return assignmentService.getHistory(officer);
-
-  }
-
+  // @PostMapping("/refill")
+  // public ResponseEntity<AssignmentResponse> refillMissingGuards(
+  // @RequestParam("vipId") Long vipId,
+  // @RequestParam("level") String level,
+  // @RequestParam("missing") int missing) {
+  //
+  // AssignmentResponse response =
+  // assignmentService.markGuardOnLeaveAndRefill(vipId, level, missing);
+  // return ResponseEntity.ok(response);
+  // }
+  //
+  // @PostMapping("/{vipId}/refill")
+  // public AssignmentResponse refillGuards(
+  // @PathVariable Long vipId,
+  // @RequestBody GuardAssignmentRequest request) {
+  //
+  // return assignmentService.refillMissingGuards(vipId, request);
+  // }
+  //
+  // @GetMapping("/getallguard")
+  // public List<UserGuardAssignment> getHistory(@RequestBody Officer officer) {
+  // return assignmentService.getHistory(officer);
+  //
+  // }
+  //
   @GetMapping("/guard/{officerId}/history")
-  public List<UserGuardAssignment> getGuardHistory(@PathVariable Long officerId) {
+  public List<GuardDutyHistorydto> getGuardHistory(@PathVariable Long officerId) {
     // System.out.println(officerId);
     return assignmentService.getGuardHistory(officerId);
   }
 
   @GetMapping("/vip/{categoryId}/history")
-  public List<UserGuardAssignment> getVipHistory(@PathVariable Long categoryId) {
+  public UserGuardAssignment getVipHistory(@PathVariable Long categoryId) {
     // System.out.println(categoryId);
     return assignmentService.getVipHistory(categoryId);
   }
@@ -108,12 +110,15 @@ public class AssignmentController {
     return assignmentService.getAllHistory();
 
   }
-
-  @PostMapping("/complete/vip/{categoryId}/{status}")
-  public ResponseEntity<AssignmentResponse> completeDutyForCategory(@PathVariable Long categoryId,
-      @PathVariable String status) {
-    AssignmentResponse resp = assignmentService.completeDutyForCategory(categoryId, status);
-    return ResponseEntity.ok(resp);
-  }
-
 }
+//
+// @PostMapping("/complete/vip/{categoryId}/{status}")
+// public ResponseEntity<AssignmentResponse>
+// completeDutyForCategory(@PathVariable Long categoryId,
+// @PathVariable String status) {
+// AssignmentResponse resp =
+// assignmentService.completeDutyForCategory(categoryId, status);
+// return ResponseEntity.ok(resp);
+// }
+//
+// }

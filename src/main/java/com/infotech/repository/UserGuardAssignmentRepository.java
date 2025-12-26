@@ -40,5 +40,5 @@ public interface UserGuardAssignmentRepository extends JpaRepository<UserGuardAs
 
   List<UserGuardAssignment> findByCategoryIdAndStatus(Long categoryId, String status);
 
-  List<UserGuardAssignment> findByCategoryIdAndStatusIgnoreCase(Long categoryId, String status);
+  UserGuardAssignment findByCategoryIdAndStatusIgnoreCase(Long categoryId, String status);
 }

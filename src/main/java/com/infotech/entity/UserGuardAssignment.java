@@ -25,8 +25,8 @@ public class UserGuardAssignment {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @OneToOne(fetch = FetchType.LAZY)
-  private Category category;
+  @OneToMany(fetch = FetchType.LAZY, mappedBy = "userGuardAssignment")
+  private List<Category> category;
 
   @OneToMany(fetch = FetchType.LAZY, mappedBy = "userGuardAssignment")
   private List<Officer> officer;

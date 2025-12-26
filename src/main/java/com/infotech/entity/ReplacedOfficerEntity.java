@@ -22,8 +22,8 @@ public class ReplacedOfficerEntity {
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "categoryId", nullable = false)
-  private Category category;
+  @JoinColumn(name = "userGuardAssignmentId", nullable = false)
+  private UserGuardAssignment userGuardAssignment;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "previousOfficerId", nullable = false)

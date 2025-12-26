@@ -6,6 +6,7 @@ import com.infotech.dto.AssignmentResponse;
 import com.infotech.dto.AssignmentResponsedto;
 import com.infotech.dto.GuardAssignmentRequest;
 import com.infotech.dto.GuardDutyHistorydto;
+import com.infotech.dto.GuardHistoryResponse;
 import com.infotech.dto.OfficerDuty;
 import com.infotech.entity.UserGuardAssignment;
 import com.infotech.service.AssignmentService;
@@ -105,20 +106,16 @@ public class AssignmentController {
   }
 
   @GetMapping("/getall")
-  public List<UserGuardAssignment> getAllHistory() {
-
+  public GuardHistoryResponse getAllHistory() {
     return assignmentService.getAllHistory();
 
   }
+
+  @PostMapping("/complete/vip/{categoryId}/{status}")
+  public ResponseEntity<AssignmentResponsedto> completeDutyForCategory(@PathVariable Long categoryId,
+      @PathVariable String status) {
+    AssignmentResponsedto resp = assignmentService.completeDutyForCategory(categoryId, status);
+    return ResponseEntity.ok(resp);
+  }
+
 }
-//
-// @PostMapping("/complete/vip/{categoryId}/{status}")
-// public ResponseEntity<AssignmentResponse>
-// completeDutyForCategory(@PathVariable Long categoryId,
-// @PathVariable String status) {
-// AssignmentResponse resp =
-// assignmentService.completeDutyForCategory(categoryId, status);
-// return ResponseEntity.ok(resp);
-// }
-//
-// }

@@ -25,52 +25,52 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/usr")
 public class UserController {
 
-    private final PasswordEncoder encoder;
+  private final PasswordEncoder encoder;
 
-    private final UserRepository userRepository;
+  private final UserRepository userRepository;
 
-    @PostMapping("/reg")
-    public UserEntity createUser(@RequestBody UserEntity usr) {
-        usr.setPassword(encoder.encode(usr.getPassword()));
-        return userRepository.save(usr);
+  @PostMapping("/reg")
+  public UserEntity createUser(@RequestBody UserEntity usr) {
+    usr.setPassword(encoder.encode(usr.getPassword()));
+    return userRepository.save(usr);
+  }
+
+  @GetMapping("/profile")
+  public UserProfileResponse getAdmin(@RequestParam String username) {
+    UserEntity admindata = userRepository.findByUsername(username)
+        .orElseThrow(() -> new RuntimeException("user not found "));
+    UserProfileResponse profile = new UserProfileResponse();
+    profile.setId(admindata.getId());
+    profile.setName(admindata.getName());
+    profile.setUsername(admindata.getUsername());
+    profile.setEmail(admindata.getEmail());
+    profile.setContactno(admindata.getContactno());
+    profile.setStatus(admindata.getStatus());
+    if (admindata.getPic() != null) {
+      profile.setUrl(admindata.getPic().getUrl());
+
     }
 
-    @GetMapping("/profile")
-    public UserProfileResponse getAdmin(@RequestParam String username) {
-        UserEntity admindata = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("user not found "));
-        UserProfileResponse profile = new UserProfileResponse();
-        profile.setId(admindata.getId());
-        profile.setName(admindata.getName());
-        profile.setUsername(admindata.getUsername());
-        profile.setEmail(admindata.getEmail());
-        profile.setContactno(admindata.getContactno());
-        profile.setStatus(admindata.getStatus());
-        if (admindata.getPic() != null) {
-            profile.setUrl(admindata.getPic().getUrl());
+    return profile;
+  }
 
-        }
+  private final UserService userService;
 
-        return profile;
+  @PutMapping("/{id}/{role}")
+  public ResponseEntity<UserEntity> updateUser(
+      @PathVariable Long id,
+      @RequestBody UserEntity updatedUser, @PathVariable String role) {
+
+    // You can also take operatedBy from SecurityContext instead of hardcoding
+    // String operatedBy = "SYSTEM"; // or current logged-in username
+
+    try {
+      UserEntity saved = userService.updateUser(id, updatedUser, role);
+      return ResponseEntity.ok(saved);
+    } catch (RuntimeException ex) {
+      // for "User not found" etc
+      return ResponseEntity.notFound().build();
     }
-
-    private final UserService userService;
-
-    @PutMapping("/{id}/{role}")
-    public ResponseEntity<UserEntity> updateUser(
-            @PathVariable Long id,
-            @RequestBody UserEntity updatedUser, @PathVariable String role) {
-
-        // You can also take operatedBy from SecurityContext instead of hardcoding
-        // String operatedBy = "SYSTEM"; // or current logged-in username
-
-        try {
-            UserEntity saved = userService.updateUser(id, updatedUser, role);
-            return ResponseEntity.ok(saved);
-        } catch (RuntimeException ex) {
-            // for "User not found" etc
-            return ResponseEntity.notFound().build();
-        }
-    }
+  }
 
 }

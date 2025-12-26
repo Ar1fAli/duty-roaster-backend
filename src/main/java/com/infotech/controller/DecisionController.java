@@ -184,9 +184,8 @@ public class DecisionController {
       // This will:
       // 1) mark the guard's last active assignment as Inactive
       // 2) set guard status = Inactive
-      // 3) refill one guard for that VIP/category
-      // assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId,
-      // req.getReason(), req.getStatus(), leave.getMessage(), val);
+      assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId,
+          req.getReason(), req.getStatus(), leave.getMessage(), val);
       System.out.println("Mark as leave called");
     }
 
@@ -431,9 +430,8 @@ public class DecisionController {
       // 1) mark guard's active assignment Inactive
       // 2) set guard status = Inactive
       // 3) refill one guard for that VIP/category
-      // assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId,
-      // req.getReason(), req.getReq(), acc.getMessage(),
-      // val);
+      assignmentService.markGuardOnLeaveAndRefillByOfficer(officerId, req.getReason(), req.getReq(), acc.getMessage(),
+          val);
     }
 
     NotificationManagement existingNotification = notificationManagementRepo
@@ -464,3 +462,4 @@ public class DecisionController {
   }
 
 }
+// req.getReason(), req.getStatus(), leave.getMessage(), val);

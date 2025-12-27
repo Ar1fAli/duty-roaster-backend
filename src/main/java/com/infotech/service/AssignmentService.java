@@ -12,15 +12,20 @@ import java.util.stream.Collectors;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
+import com.infotech.dto.AssignmentHistoryDto;
 import com.infotech.dto.AssignmentResponse;
 import com.infotech.dto.AssignmentResponsedto;
 import com.infotech.dto.AssignmentSummary;
+import com.infotech.dto.CategoryDto;
 import com.infotech.dto.GuardAssignmentRequest;
 import com.infotech.dto.GuardDutyHistorydto;
 import com.infotech.dto.GuardHistoryResponse;
 import com.infotech.dto.GuardLevelRequest;
+import com.infotech.dto.OfficerDto;
 import com.infotech.dto.OfficerDuty;
+import com.infotech.dto.ReplacedOfficerDto;
 import com.infotech.entity.AdminEntity;
+import com.infotech.entity.AssignmentHistoryEntity;
 import com.infotech.entity.Category;
 import com.infotech.entity.NotificationManagement;
 import com.infotech.entity.Officer;
@@ -28,6 +33,7 @@ import com.infotech.entity.ReplacedOfficerEntity;
 import com.infotech.entity.UserEntity;
 import com.infotech.entity.UserGuardAssignment;
 import com.infotech.repository.AdminRepsitory;
+import com.infotech.repository.AssignmentHistoryRepository;
 import com.infotech.repository.CategoryRepository;
 import com.infotech.repository.NotificationCategoryRepository;
 import com.infotech.repository.NotificationGuardRepository;
@@ -59,6 +65,7 @@ public class AssignmentService {
   private final UserRepository userRepository;
   private final AdminRepsitory adminRepository;
   private final TaskRepository taskRepository;
+  private final AssignmentHistoryRepository assignmentHistoryRepository;
 
   private final FcmService service;
 
@@ -894,7 +901,7 @@ public class AssignmentService {
     officerRepository.findById(officerId)
         .orElseThrow(() -> new RuntimeException("Officer not found: " + officerId));
 
-    return assignmentRepository.findAll().stream()
+    return assignmentHistoryRepository.findAll().stream()
         .filter(a -> a.getOfficer() != null &&
             a.getOfficer().stream()
                 .anyMatch(o -> o.getId().equals(officerId)))
@@ -955,14 +962,114 @@ public class AssignmentService {
   // }
   //
   @Transactional(readOnly = true)
-  public UserGuardAssignment getVipHistory(Long categoryId) {
-    return assignmentRepository.findByCategory_Id(categoryId);
+  public List<AssignmentHistoryEntity> getVipHistory(Long categoryId) {
+
+    categoryRepository.findById(categoryId)
+        .orElseThrow(() -> new RuntimeException(
+            "Category not found for id: " + categoryId));
+
+    List<AssignmentHistoryEntity> assignment = assignmentHistoryRepository.findAll().stream()
+        .filter(a -> a.getCategory().stream()
+            .anyMatch(c -> c.getId().equals(categoryId)))
+        .toList();
+    return assignment;
+  }
+
+  private CategoryDto mapCategory(Category c) {
+    CategoryDto dto = new CategoryDto();
+    dto.setId(c.getId());
+    dto.setContactno(c.getContactno());
+    dto.setEmail(c.getEmail());
+    dto.setUsername(c.getUsername());
+    dto.setDesignation(c.getDesignation());
+    dto.setStatus(c.getStatus());
+    dto.setAdharNo(c.getAdharNo());
+    dto.setGender(c.getGender());
+    return dto;
+  }
+
+  private OfficerDto mapOfficer(Officer o) {
+    OfficerDto dto = new OfficerDto();
+    dto.setId(o.getId());
+    dto.setName(o.getName());
+    dto.setRank(o.getRank());
+    dto.setStatus(o.getStatus());
+    dto.setEmail(o.getEmail());
+    dto.setUsername(o.getUsername());
+    dto.setCreatedTime(o.getCreatedTime());
+    dto.setPnNumber(o.getPnNumber());
+    dto.setAdharNo(o.getAdharNo());
+    dto.setExperience(o.getExperience());
+    dto.setContactno(o.getContactno());
+    dto.setGender(o.getGender());
+    return dto;
+  }
+
+  private AssignmentHistoryDto mapAssignmentHistory(AssignmentHistoryEntity e) {
+
+    AssignmentHistoryDto dto = new AssignmentHistoryDto();
+
+    dto.setId(e.getId());
+    dto.setStatus(e.getStatus());
+    dto.setTimesAssigned(e.getTimesAssigned());
+    dto.setAssignedAt(e.getAssignedAt());
+    dto.setStartAt(e.getStartAt());
+    dto.setEndAt(e.getEndAt());
+    dto.setAtEnd(e.getAtEnd());
+
+    if (e.getCategory() != null) {
+      dto.setCategories(
+          e.getCategory().stream()
+              .map(this::mapCategory)
+              .toList());
+    }
+
+    if (e.getOfficer() != null) {
+      dto.setOfficers(
+          e.getOfficer().stream()
+              .map(this::mapOfficer)
+              .toList());
+    }
+
+    return dto;
+  }
+
+  private ReplacedOfficerDto mapReplacedOfficer(ReplacedOfficerEntity e) {
+
+    ReplacedOfficerDto dto = new ReplacedOfficerDto();
+
+    dto.setId(e.getId());
+    dto.setReason(e.getReason());
+    dto.setReasonMessage(e.getReasonMessage());
+    dto.setAcceptedBy(e.getAcceptedBy());
+    dto.setStatus(e.getStatus());
+
+    if (e.getUserGuardAssignment() != null) {
+      dto.setAssignmentId(e.getUserGuardAssignment().getId());
+    }
+
+    if (e.getPreviousOfficer() != null) {
+      dto.setPreviousOfficer(mapOfficer(e.getPreviousOfficer()));
+    }
+
+    if (e.getCurrentOfficer() != null) {
+      dto.setCurrentOfficer(mapOfficer(e.getCurrentOfficer()));
+    }
+
+    return dto;
   }
 
   public GuardHistoryResponse getAllHistory() {
 
-    List<UserGuardAssignment> assignments = assignmentRepository.findAll();
-    List<ReplacedOfficerEntity> replaced = replacedOfficerRepository.findAll();
+    List<AssignmentHistoryDto> assignments = assignmentHistoryRepository.findAll()
+        .stream()
+        .map(this::mapAssignmentHistory)
+        .toList();
+
+    List<ReplacedOfficerDto> replaced = replacedOfficerRepository.findAll()
+        .stream()
+        .map(this::mapReplacedOfficer)
+        .toList();
 
     return new GuardHistoryResponse(assignments, replaced);
   }
@@ -1184,14 +1291,32 @@ public class AssignmentService {
         category.getId());
 
     // 6. Return updated snapshot
-    assignmentRepository.save(activeAssignments);
 
+    AssignmentHistoryEntity historyEntity = new AssignmentHistoryEntity();
+
+    historyEntity.setCategory(
+        activeAssignments.getCategory() != null
+            ? new ArrayList<>(activeAssignments.getCategory())
+            : new ArrayList<>());
+
+    historyEntity.setOfficer(
+        activeAssignments.getOfficer() != null
+            ? new ArrayList<>(activeAssignments.getOfficer())
+            : new ArrayList<>());
+    historyEntity.setAssignedAt(activeAssignments.getAssignedAt());
+    historyEntity.setAtEnd(activeAssignments.getAtEnd());
+    historyEntity.setStatus(activeAssignments.getStatus());
+    historyEntity.setStartAt(activeAssignments.getStartAt());
+    historyEntity.setEndAt(LocalDateTime.now());
+
+    assignmentHistoryRepository.save(historyEntity);
     AssignmentResponsedto response = new AssignmentResponsedto();
     response.setOfficer(activeAssignments.getOfficer());
     response.setStartAt(activeAssignments.getStartAt());
     response.setAssignedAt(activeAssignments.getAssignedAt());
     response.setAtEnd(activeAssignments.getAtEnd());
     response.setId(activeAssignments.getId());
+    assignmentRepository.save(activeAssignments);
     return response;
   }
 

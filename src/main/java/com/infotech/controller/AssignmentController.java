@@ -8,7 +8,7 @@ import com.infotech.dto.GuardAssignmentRequest;
 import com.infotech.dto.GuardDutyHistorydto;
 import com.infotech.dto.GuardHistoryResponse;
 import com.infotech.dto.OfficerDuty;
-import com.infotech.entity.UserGuardAssignment;
+import com.infotech.entity.AssignmentHistoryEntity;
 import com.infotech.service.AssignmentService;
 import com.infotech.service.FcmService;
 
@@ -100,7 +100,7 @@ public class AssignmentController {
   }
 
   @GetMapping("/vip/{categoryId}/history")
-  public UserGuardAssignment getVipHistory(@PathVariable Long categoryId) {
+  public List<AssignmentHistoryEntity> getVipHistory(@PathVariable Long categoryId) {
     // System.out.println(categoryId);
     return assignmentService.getVipHistory(categoryId);
   }

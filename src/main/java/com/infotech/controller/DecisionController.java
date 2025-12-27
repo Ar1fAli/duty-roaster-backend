@@ -55,14 +55,14 @@ public class DecisionController {
       NotificationManagement existingNotificationUser = notificationManagementRepo
           .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "user");
       NotificationManagement notificationuser = new NotificationManagement();
-      notificationuser.setNotificationSenderId(existingNotificationUser.getNotificationSenderId());
-      notificationuser.setNotificationSender("user");
-      notificationuser.setNotificationSenderName(existingNotificationUser.getNotificationSenderName());
-      notificationuser.setNotificationMessage("decision is taken placed by" + req.getOfficer().getName());
 
       if (existingNotificationUser != null) {
+        notificationuser.setNotificationSender("user");
+        notificationuser.setNotificationSenderId(existingNotificationUser.getNotificationSenderId());
+        notificationuser.setNotificationSenderName(existingNotificationUser.getNotificationSenderName());
         existingNotificationUser.setNotificationToken(existingNotificationUser.getNotificationToken());
       }
+      notificationuser.setNotificationMessage("decision is taken placed by" + req.getOfficer().getName());
 
       notificationuser.setNotificationStatus(false);
       notificationuser.setNotificationAssignTime(LocalDateTime.now());
@@ -244,15 +244,15 @@ public class DecisionController {
     if (true) {
       NotificationManagement existingNotificationUser = notificationManagementRepo
           .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1L, "user");
-      NotificationManagement notificationuser = new NotificationManagement();
-      notificationuser.setNotificationSenderId(existingNotificationUser.getNotificationSenderId());
-      notificationuser.setNotificationSender("user");
-      notificationuser.setNotificationSenderName(existingNotificationUser.getNotificationSenderName());
-      notificationuser.setNotificationMessage("decision is taken placed by" + req.getGuardData().getName());
 
+      NotificationManagement notificationuser = new NotificationManagement();
       if (existingNotificationUser != null) {
+        notificationuser.setNotificationSender("user");
+        notificationuser.setNotificationSenderName(existingNotificationUser.getNotificationSenderName());
+        notificationuser.setNotificationSenderId(existingNotificationUser.getNotificationSenderId());
         existingNotificationUser.setNotificationToken(existingNotificationUser.getNotificationToken());
       }
+      notificationuser.setNotificationMessage("decision is taken placed by" + req.getGuardData().getName());
 
       notificationuser.setNotificationStatus(false);
       notificationuser.setNotificationAssignTime(LocalDateTime.now());

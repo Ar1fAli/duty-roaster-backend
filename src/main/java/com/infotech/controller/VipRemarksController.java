@@ -4,11 +4,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.infotech.dto.VipRemarksdto;
-import com.infotech.entity.Category;
 import com.infotech.entity.Officer;
 import com.infotech.entity.VipRemarks;
 import com.infotech.repository.CategoryRepository;
 import com.infotech.repository.OfficerRepository;
+import com.infotech.repository.UserGuardAssignmentRepository;
 import com.infotech.repository.VipRemarksRepository;
 
 import org.springframework.http.ResponseEntity;
@@ -28,6 +28,7 @@ public class VipRemarksController {
   private final VipRemarksRepository vipRemarksRepository;
   private final CategoryRepository categoryRepository;
   private final OfficerRepository officerRepository;
+  private final UserGuardAssignmentRepository currentassignmentRepo;
 
   @GetMapping
   public ResponseEntity<List<VipRemarks>> getAllVipRemarks() {
@@ -39,18 +40,19 @@ public class VipRemarksController {
 
     VipRemarks remarks = new VipRemarks();
 
-    Officer officer = officerRepository.findById(vipRemarks.getOfficerId()).orElse(null);
-    if (officer == null) {
-      return "Officer not found";
+    Long curraAssignment = vipRemarks.getCurrentAssignment() == null ? null : vipRemarks.getCurrentAssignment().getId();
+
+    if (curraAssignment != null) {
+      return "Assignment not found";
+      // Optional<UserGuardAssignment> currentAssignment =
+      // currentassignmentRepo.findById(curraAssignment);
+
     }
 
-    Category vip = categoryRepository.findById(vipRemarks.getVipId()).orElse(null);
-    if (categoryRepository == null) {
-      return "Vip not found";
-    }
+    List<Officer> officers = vipRemarks.getOfficers();
 
-    remarks.setOfficer(officer);
-    remarks.setVip(vip);
+    // remarks.setOfficer(officer);
+    // remarks.setVip(vip);
     remarks.setRemarks(vipRemarks.getRemarks());
     remarks.setSubject(vipRemarks.getSubject());
     remarks.setStatus("Pending");

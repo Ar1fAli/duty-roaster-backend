@@ -1,6 +1,7 @@
 package com.infotech.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -8,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 
 import lombok.Data;
@@ -20,12 +22,11 @@ public class VipRemarks {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private Long id;
 
+  @ManyToMany
+  private List<Officer> officer;
   @ManyToOne
-  @JoinColumn(name = "officerId", nullable = false)
-  private Officer officer;
-  @ManyToOne
-  @JoinColumn(name = "vipId", nullable = false)
-  private Category vip;
+  @JoinColumn(name = "assignmentHistoryId")
+  private AssignmentHistoryEntity assignmentHistory;
 
   @Column(name = "remarks", nullable = false)
   private String remarks;

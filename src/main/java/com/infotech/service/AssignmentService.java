@@ -32,6 +32,7 @@ import com.infotech.entity.Officer;
 import com.infotech.entity.ReplacedOfficerEntity;
 import com.infotech.entity.UserEntity;
 import com.infotech.entity.UserGuardAssignment;
+import com.infotech.exception.GuardAssignmentException;
 import com.infotech.repository.AdminRepsitory;
 import com.infotech.repository.AssignmentHistoryRepository;
 import com.infotech.repository.CategoryRepository;
@@ -72,13 +73,124 @@ public class AssignmentService {
   @PersistenceContext
   private EntityManager em;
 
-  private static final int MAX_REUSE = 10;
+  private static final int MAX_ASSIGN_PER_VIP = 4;
+
+  @Transactional
+  public AssignmentResponse assignGuardsAutomatically(GuardAssignmentRequest request) {
+
+    Category category = categoryRepository.findById(request.getUserId())
+        .orElseThrow(() -> new RuntimeException("VIP not found"));
+
+    List<AssignmentSummary> summaries = new ArrayList<>();
+    Map<String, List<Officer>> finalSelections = new LinkedHashMap<>();
+    List<Officer> allSelectedOfficers = new ArrayList<>();
+
+    // 🔒 PHASE 1: VALIDATION ONLY (NO DB WRITE)
+    for (GuardLevelRequest levelReq : request.getLevels()) {
+
+      String level = levelReq.getGuardLevel();
+      int requested = levelReq.getNumberOfGuards();
+
+      // 1️⃣ History for this VIP + rank
+      List<UserGuardAssignment> history = assignmentRepository.findByCategoryAndOfficerRank(category, level);
+
+      Map<Long, Long> usageCount = history.stream()
+          .flatMap(a -> a.getOfficers().stream())
+          .collect(Collectors.groupingBy(
+              Officer::getId,
+              Collectors.counting()));
+
+      // 2️⃣ All inactive officers of rank
+      List<Officer> inactive = officerRepository.findByRank(level)
+          .stream()
+          .filter(o -> "Inactive".equalsIgnoreCase(o.getStatus()))
+          .collect(Collectors.toList());
+
+      // 3️⃣ Eligible officers (below limit)
+      List<Officer> eligible = inactive.stream()
+          .filter(o -> usageCount.getOrDefault(o.getId(), 0L) < MAX_ASSIGN_PER_VIP)
+          .collect(Collectors.toList());
+
+      int blockedByLimit = inactive.size() - eligible.size();
+
+      // 🚨 HARD FAIL — REQUIREMENT NOT MET
+      if (eligible.size() < requested) {
+
+        String reason;
+
+        if (inactive.isEmpty()) {
+          reason = "No inactive officers available for rank '" + level + "'";
+        } else if (eligible.isEmpty()) {
+          reason = "All inactive officers of rank '" + level +
+              "' reached assignment limit (" + MAX_ASSIGN_PER_VIP + ")";
+        } else {
+          reason = "Only " + eligible.size() + " eligible officers available, " +
+              "but " + requested + " required. " +
+              blockedByLimit + " officers blocked by limit";
+        }
+
+        throw new GuardAssignmentException(
+            "Assignment FAILED for rank '" + level + "'. Reason: " + reason);
+      }
+
+      // 4️⃣ Select officers (safe now)
+      Collections.shuffle(eligible);
+      List<Officer> selected = eligible.subList(0, requested);
+
+      finalSelections.put(level, selected);
+      allSelectedOfficers.addAll(selected);
+
+      summaries.add(new AssignmentSummary(
+          level,
+          requested,
+          requested,
+          0,
+          blockedByLimit,
+          inactive.size()));
+    }
+
+    // 🔒 PHASE 2: SAFE TO COMMIT (ALL LEVELS PASSED)
+
+    UserGuardAssignment assignment = new UserGuardAssignment();
+    assignment.setCategory(category);
+    assignment.setOfficers(allSelectedOfficers);
+    assignment.setStatus("Active Duty");
+    assignment.setAssignedAt(LocalDateTime.now());
+    assignment.setStartAt(request.getStartAt());
+    assignment.setEndAt(request.getEndAt());
+
+    UserGuardAssignment savedAssignment = assignmentRepository.save(assignment);
+
+    for (Officer officer : allSelectedOfficers) {
+      officer.setStatus("Active");
+
+      if (officer.getAssignments() == null) {
+        officer.setAssignments(new ArrayList<>());
+      }
+      officer.getAssignments().add(savedAssignment);
+
+      officerRepository.save(officer);
+    }
+
+    category.setStatus("Active");
+    if (category.getAssignments() == null) {
+      category.setAssignments(new ArrayList<>());
+    }
+    category.getAssignments().add(savedAssignment);
+    categoryRepository.save(category);
+
+    AssignmentResponse response = new AssignmentResponse();
+    response.setSummary(summaries);
+    response.setDetails(List.of(savedAssignment));
+
+    return response;
+  }
 
   // -----------------------------------------------
   // assignGuardsAutomatically (unchanged)
   // -----------------------------------------------
   @Transactional
-  public AssignmentResponse assignGuardsAutomatically(GuardAssignmentRequest request) {
+  public AssignmentResponse assignGuardsAutomatically2(GuardAssignmentRequest request) {
 
     Category category = categoryRepository.findById(request.getUserId())
         .orElseThrow(() -> new RuntimeException(
@@ -141,8 +253,12 @@ public class AssignmentService {
       List<Officer> combinedPool = new ArrayList<>(allInactiveThisLevel);
       Collections.shuffle(combinedPool);
 
+      int willAssign = Math.min(requestedCount, combinedPool.size());
+
+      List<Officer> selected = combinedPool.subList(0, willAssign);
+
       // int willAssign = Math.min(missing, combinedPool.size());
-      List<Officer> selected = combinedPool.subList(0, requestedCount);
+      // List<Officer> selected = combinedPool.subList(0, requestedCount);
 
       // List<Officer> availableGuards = allInactiveThisLevel.stream()
       // .filter(o -> !activeGuardIds.contains(o
@@ -193,28 +309,26 @@ public class AssignmentService {
 
       // int totalAssignedNow = activeCount + selected.size();
       summaries.add(new AssignmentSummary(level, requestedCount,
-          selected.size(),
-          Math.max(0, requestedCount - selected.size())));
+          selected.size(), 4, 3, Math.max(0, requestedCount - selected.size())));
     }
     assignedassigment.setStatus("Active Duty");
     assignedassigment.setAssignedAt(LocalDateTime.now());
     assignedassigment.setStartAt(request.getStartAt());
     assignedassigment.setEndAt(request.getEndAt());
-    assignedassigment.setCategory(List.of(category));
+    assignedassigment.setCategory(category);
 
-    assignedassigment.setOfficer(assignedOfficers);
-    UserGuardAssignment savedAssignments = assignmentRepository.save(assignedassigment);
+    assignedassigment.setOfficers(assignedOfficers);
 
     List<String> failLevels = summaries.stream()
         .filter(s -> s.getMissing() > 0)
         .map(AssignmentSummary::getLevel)
         .collect(Collectors.toList());
 
-    if (!failLevels.isEmpty()) {
-      throw new RuntimeException("Insufficient guards for: " + failLevels
-          + ". No assignment performed.");
+    if (assignedOfficers.isEmpty()) {
+      throw new RuntimeException("No guards available for assignment");
     }
 
+    UserGuardAssignment savedAssignments = assignmentRepository.save(assignedassigment);
     for (Map.Entry<String, List<Officer>> entry : selectionsByLevel.entrySet()) {
       String level = entry.getKey();
       List<Officer> selected = entry.getValue();
@@ -241,7 +355,12 @@ public class AssignmentService {
 
       for (Officer officer : selected) {
         officer.setStatus("Active");
-        officer.setUserGuardAssignment(savedAssignments);
+
+        if (officer.getAssignments() == null) {
+          officer.setAssignments(new ArrayList<>());
+        }
+        officer.getAssignments().add(savedAssignments);
+        // officer.getAssignments().add(savedAssignments);
         officerRepository.save(officer);
 
         // ✅ CORRECT: Look up token BEFORE creating new notification
@@ -313,7 +432,9 @@ public class AssignmentService {
       // taskRepository.save(tasks);
       if (!responseDetails.isEmpty()) {
         category.setStatus("Active");
-        category.setUserGuardAssignment(savedAssignments);
+        // category.setUserGuardAssignment(savedAssignments);
+        category.getAssignments().add(savedAssignments);
+
         categoryRepository.save(category);
       }
     }
@@ -353,9 +474,11 @@ public class AssignmentService {
 
     notificationManagementRepo.save(notificationcat);
 
-    AdminEntity admin = adminRepository.findById(1L).orElse(null);
+    AdminEntity admin = adminRepository.findById(1L)
+        .orElseThrow(() -> new RuntimeException("Admin not found"));
+    // AdminEntity admin = adminRepository.findById(1L).orElse(null);
     NotificationManagement notificationadmin = notificationManagementRepo
-        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(1l, "admin");
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(admin.getId(), "admin");
 
     String adminFcmToken = notificationadmin != null
         ? notificationadmin.getNotificationToken()
@@ -403,7 +526,8 @@ public class AssignmentService {
     //
     //
 
-    UserGuardAssignment assignment = category.getUserGuardAssignment();
+    UserGuardAssignment assignment = category.getAssignments().stream().filter(a -> ACTIVE_STATUS.equals(a.getStatus()))
+        .findFirst().get();
     AssignmentResponsedto assignmentresponse = new AssignmentResponsedto();
 
     if (assignment != null) {
@@ -413,12 +537,12 @@ public class AssignmentService {
       assignmentresponse.setEndAt(assignment.getEndAt());
       assignmentresponse.setAtEnd(assignment.getAtEnd());
       assignmentresponse.setStatus(assignment.getStatus());
-      assignmentresponse.setOfficer(assignment.getOfficer());
+      assignmentresponse.setOfficer(assignment.getOfficers());
     }
 
     if (category != null) {
 
-      assignmentresponse.setCategory(assignment.getCategory().stream().findFirst().get());
+      assignmentresponse.setCategory(assignment.getCategory());
     }
     assignmentresponse.setAssignedAt(assignment.getAssignedAt());
     assignmentresponse.setStartAt(assignment.getStartAt());
@@ -475,7 +599,8 @@ public class AssignmentService {
     Officer officer = officerRepository.findById(officerId)
         .orElseThrow(() -> new RuntimeException("Officer not found: " + officerId));
 
-    UserGuardAssignment assignment = officer.getUserGuardAssignment();
+    UserGuardAssignment assignment = officer.getAssignments().stream().filter(a -> ACTIVE_STATUS.equals(a.getStatus()))
+        .findFirst().get();
     if (assignment == null) {
       throw new RuntimeException("No active VIP assignment for guard " + officerId);
     }
@@ -503,7 +628,7 @@ public class AssignmentService {
     // "No active VIP assignment for guard "
     // + officerId));
 
-    Category cat = persistedAssignment.getCategory().stream().findFirst().get();
+    Category cat = persistedAssignment.getCategory();
 
     dto.setName(cat.getName());
     dto.setDesignation(cat.getDesignation());
@@ -1005,7 +1130,7 @@ public class AssignmentService {
     return dto;
   }
 
-  private AssignmentHistoryDto mapAssignmentHistory(AssignmentHistoryEntity e) {
+  private AssignmentHistoryDto mapAssignmentHistory(UserGuardAssignment e) {
 
     AssignmentHistoryDto dto = new AssignmentHistoryDto();
 
@@ -1017,16 +1142,15 @@ public class AssignmentService {
     dto.setEndAt(e.getEndAt());
     dto.setAtEnd(e.getAtEnd());
 
+    // single category (VIP)
     if (e.getCategory() != null) {
-      dto.setCategories(
-          e.getCategory().stream()
-              .map(this::mapCategory)
-              .toList());
+      dto.setCategory(mapCategory(e.getCategory()));
     }
 
-    if (e.getOfficer() != null) {
+    // multiple officers
+    if (e.getOfficers() != null && !e.getOfficers().isEmpty()) {
       dto.setOfficers(
-          e.getOfficer().stream()
+          e.getOfficers().stream()
               .map(this::mapOfficer)
               .toList());
     }
@@ -1061,7 +1185,7 @@ public class AssignmentService {
 
   public GuardHistoryResponse getAllHistory() {
 
-    List<AssignmentHistoryDto> assignments = assignmentHistoryRepository.findAll()
+    List<AssignmentHistoryDto> assignments = assignmentRepository.findAll()
         .stream()
         .map(this::mapAssignmentHistory)
         .toList();
@@ -1128,7 +1252,6 @@ public class AssignmentService {
       }
 
       category.setStatus("Inactive");
-      category.setUserGuardAssignment(null);
       categoryRepository.save(category);
 
       AssignmentResponse resp = new AssignmentResponse();
@@ -1145,12 +1268,11 @@ public class AssignmentService {
     activeAssignments.setAtEnd(now);
 
     // 4. Free all these officers and send notifications
-    for (Officer officer : activeAssignments.getOfficer()) {
+    for (Officer officer : activeAssignments.getOfficers()) {
       if (officer == null) {
         continue;
       }
       officer.setStatus("inactive");
-      officer.setUserGuardAssignment(null);
 
       NotificationManagement notificationofficer = new NotificationManagement();
       NotificationManagement notificationidoff = notificationManagementRepo
@@ -1254,13 +1376,13 @@ public class AssignmentService {
 
     // Long assignId = category.getId() != null ?
     // category.getUserGuardAssignment().getId() : null;
-    UserGuardAssignment uga = category.getUserGuardAssignment();
+    // UserGuardAssignment uga = category.getUserGuardAssignment();
 
     // 5. Mark VIP/category as Inactive
     category.setStatus("Inactive");
-    if (uga != null) {
-      category.setUserGuardAssignment(null);
-    }
+    // if (uga != null) {
+    // category.setUserGuardAssignment(null);
+    // }
     categoryRepository.save(category);
 
     NotificationManagement notificationofficer = new NotificationManagement();
@@ -1292,26 +1414,25 @@ public class AssignmentService {
 
     // 6. Return updated snapshot
 
-    AssignmentHistoryEntity historyEntity = new AssignmentHistoryEntity();
-
-    historyEntity.setCategory(
-        activeAssignments.getCategory() != null
-            ? new ArrayList<>(activeAssignments.getCategory())
-            : new ArrayList<>());
-
-    historyEntity.setOfficer(
-        activeAssignments.getOfficer() != null
-            ? new ArrayList<>(activeAssignments.getOfficer())
-            : new ArrayList<>());
-    historyEntity.setAssignedAt(activeAssignments.getAssignedAt());
-    historyEntity.setAtEnd(activeAssignments.getAtEnd());
-    historyEntity.setStatus(activeAssignments.getStatus());
-    historyEntity.setStartAt(activeAssignments.getStartAt());
-    historyEntity.setEndAt(LocalDateTime.now());
-
-    assignmentHistoryRepository.save(historyEntity);
+    // AssignmentHistoryEntity historyEntity = new AssignmentHistoryEntity();
+    //
+    // historyEntity.setCategory(
+    // activeAssignments.getCategory() != null
+    // ? new ArrayList<>(activeAssignments.getCategory())
+    // : new ArrayList<>());
+    //
+    // historyEntity.setOfficer(
+    // activeAssignments.getOfficer() != null
+    // ? new ArrayList<>(activeAssignments.getOfficer())
+    // : new ArrayList<>());
+    // historyEntity.setAssignedAt(activeAssignments.getAssignedAt());
+    // historyEntity.setAtEnd(activeAssignments.getAtEnd());
+    // historyEntity.setStatus(activeAssignments.getStatus());
+    // historyEntity.setStartAt(activeAssignments.getStartAt());
+    // historyEntity.setEndAt(LocalDateTime.now());
+    //
+    // assignmentHistoryRepository.save(historyEntity);
     AssignmentResponsedto response = new AssignmentResponsedto();
-    response.setOfficer(activeAssignments.getOfficer());
     response.setStartAt(activeAssignments.getStartAt());
     response.setAssignedAt(activeAssignments.getAssignedAt());
     response.setAtEnd(activeAssignments.getAtEnd());
@@ -1328,7 +1449,8 @@ public class AssignmentService {
     Officer officer = officerRepository.findById(officerId)
         .orElseThrow(() -> new RuntimeException("Officer not found with id: " + officerId));
 
-    UserGuardAssignment assignment = officer.getUserGuardAssignment();
+    UserGuardAssignment assignment = officer.getAssignments().stream()
+        .filter(a -> ACTIVE_STATUS.equalsIgnoreCase(a.getStatus())).findFirst().get();
     // UserGuardAssignment assignment = assignmentRepository
     // .findFirstByOfficerIdAndStatusOrderByAssignedAtDesc(
     // officerId,
@@ -1346,13 +1468,13 @@ public class AssignmentService {
     replacedOfficer.setAcceptedBy(accepter);
     replacedOfficer.setStatus("Pending");
 
-    assignment.setStatus(reason);
+    // assignment.setStatus(reason);
 
     // System.out.println("officer is " + officer +
     // "officer status is " + officer.getStatus() + "Assignment is this " +
     // assignment);
     officer.setStatus("Inactive");
-    officer.setUserGuardAssignment(null);
+    // officer.setUserGuardAssignment(null);
     System.out.println(officer.getStatus() + "Status is this" +
         officer.getStatus());
     Officer officer2 = officerRepository.save(officer);
@@ -1381,13 +1503,13 @@ public class AssignmentService {
       List<Officer> selected = combinedPool.subList(0, val);
       Officer selectedOfficer = selected.get(0);
 
-      if (assignment.getOfficer() == null) {
-        assignment.setOfficer(new ArrayList<>());
+      if (assignment.getOfficers() == null) {
+        assignment.setOfficers(new ArrayList<>());
       }
-      assignment.getOfficer().add(selectedOfficer);
+      assignment.getOfficers().add(selectedOfficer);
 
       selectedOfficer.setStatus("Active");
-      selectedOfficer.setUserGuardAssignment(assignment);
+      selectedOfficer.getAssignments().add(assignment);
       officerRepository.save(selectedOfficer);
 
       replacedOfficer.setCurrentOfficer(selectedOfficer);
@@ -1395,7 +1517,7 @@ public class AssignmentService {
       assignmentRepository.save(assignment);
       replacedOfficerRepository.save(replacedOfficer);
 
-      Long vipId = assignment.getCategory().stream().findFirst().get().getId();
+      // Long vipId = assignment.getCategory().stream().findFirst().get().getId();
       String level = officer.getRank(); // or
       // assignment.getGuardLevel()
       // if you have that

@@ -6,8 +6,11 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class AssignmentSummary {
-    private String level;
-    private Integer requested;
-    private Integer assigned;
-    private Integer missing;
+  private String level;
+  private Integer requested;
+  private Integer assigned;
+  private Integer missing;
+
+  private int blockedByLimit;
+  private int inactiveAvailable;
 }

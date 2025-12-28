@@ -49,7 +49,8 @@ public class Officer {
   @JsonIgnore
   private ProfilePicture pic;
 
-  @ManyToMany(mappedBy = "guards")
+  @ManyToMany(mappedBy = "officers")
+  @JsonIgnore
   private List<UserGuardAssignment> assignments;
 
 }

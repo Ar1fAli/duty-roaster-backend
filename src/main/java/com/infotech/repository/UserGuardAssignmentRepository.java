@@ -1,12 +1,13 @@
 package com.infotech.repository;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.infotech.entity.Category;
 import com.infotech.entity.UserGuardAssignment;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface UserGuardAssignmentRepository extends JpaRepository<UserGuardAssignment, Long> {
 
@@ -34,11 +35,22 @@ public interface UserGuardAssignmentRepository extends JpaRepository<UserGuardAs
   // @Param("category") Category category,
   // @Param("level") String level);
   //
-  Optional<UserGuardAssignment> findFirstByOfficerIdAndStatusOrderByAssignedAtDesc(
-      Long officerId,
-      String status);
-
+  // Optional<UserGuardAssignment>
+  // findFirstByOfficerIdAndStatusOrderByAssignedAtDesc(
+  // Long officerId,
+  // String status);
+  //
   List<UserGuardAssignment> findByCategoryIdAndStatus(Long categoryId, String status);
 
   UserGuardAssignment findByCategoryIdAndStatusIgnoreCase(Long categoryId, String status);
+
+  @Query("""
+        SELECT a FROM UserGuardAssignment a
+        JOIN a.officers o
+        WHERE a.category = :category
+        AND o.rank = :rank
+      """)
+  List<UserGuardAssignment> findByCategoryAndOfficerRank(
+      @Param("category") Category category,
+      @Param("rank") String rank);
 }

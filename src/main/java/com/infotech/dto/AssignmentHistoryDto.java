@@ -17,6 +17,6 @@ public class AssignmentHistoryDto {
   private LocalDateTime endAt;
   private LocalDateTime atEnd;
 
-  private List<CategoryDto> categories;
+  private CategoryDto category;
   private List<OfficerDto> officers;
 }

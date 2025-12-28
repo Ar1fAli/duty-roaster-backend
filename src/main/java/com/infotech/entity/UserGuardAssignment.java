@@ -19,23 +19,29 @@ import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
-@Entity
 @Table(name = "user_guard_assignments")
-@Data
+@Getter
+@Setter
+@Entity
+@ToString(exclude = { "category", "officers" })
+@EqualsAndHashCode(exclude = { "category", "officers" })
 public class UserGuardAssignment {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "vip_id", nullable = false)
-  private Category vip;
+  @JoinColumn(name = "categoryId", nullable = false)
+  private Category category;
 
   @ManyToMany
-  @JoinTable(name = "assignment_guards", joinColumns = @JoinColumn(name = "assignment_id"), inverseJoinColumns = @JoinColumn(name = "officer_id"))
-  private List<Officer> guards = new ArrayList<>();
+  @JoinTable(name = "assignmentOfficer", joinColumns = @JoinColumn(name = "assignment_id"), inverseJoinColumns = @JoinColumn(name = "officer_id"))
+  private List<Officer> officers = new ArrayList<>();
   @OneToOne(fetch = FetchType.LAZY)
   private VipRemarks vipRemarks;
 

@@ -15,13 +15,9 @@ import jakarta.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "categories")
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
@@ -47,6 +43,7 @@ public class Category {
   @JsonIgnore
   private ProfilePicture pic;
 
-  @OneToMany(mappedBy = "vip", fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
+  @JsonIgnore
   private List<UserGuardAssignment> assignments;
 }

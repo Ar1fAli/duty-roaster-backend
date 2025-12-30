@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 
@@ -23,24 +24,28 @@ public class VipRemarks {
   private Long id;
 
   @ManyToMany
-  private List<Officer> officer;
-  @ManyToOne
-  @JoinColumn(name = "assignmentHistoryId")
-  private AssignmentHistoryEntity assignmentHistory;
+  @JoinTable(name = "vip_remarks_officers", joinColumns = @JoinColumn(name = "vip_remarks_id"), inverseJoinColumns = @JoinColumn(name = "officer_id"))
+  private List<Officer> officersRemarks;
 
-  @Column(name = "remarks", nullable = false)
+  @ManyToOne
+  @JoinColumn(name = "assignmentId")
+  private UserGuardAssignment assignment;
+
+  @ManyToOne
+  @JoinColumn(name = "category_id", nullable = false)
+  private Category category;
+
+  @Column(nullable = false)
   private String remarks;
 
-  @Column(name = "created", nullable = false)
-  private LocalDateTime created;
-
-  @Column(name = "readtime")
-  private LocalDateTime readtime;
-
-  @Column(name = "subject", nullable = false)
+  @Column(nullable = false)
   private String subject;
 
-  @Column(name = "status", nullable = false)
+  @Column(nullable = false)
   private String status;
 
+  @Column(nullable = false)
+  private LocalDateTime created;
+
+  private LocalDateTime readtime;
 }

@@ -18,7 +18,7 @@ public interface UserGuardAssignmentRepository extends JpaRepository<UserGuardAs
 
   // List<UserGuardAssignment> findByOfficerId(Long officerId);
 
-  UserGuardAssignment findByCategory_Id(Long categoryId);
+  List<UserGuardAssignment> findByCategory_Id(Long categoryId);
 
   // Active assignments for a category and level (rank)
   // @Query("SELECT a FROM UserGuardAssignment a JOIN a.officer o " +
@@ -53,4 +53,13 @@ public interface UserGuardAssignmentRepository extends JpaRepository<UserGuardAs
   List<UserGuardAssignment> findByCategoryAndOfficerRank(
       @Param("category") Category category,
       @Param("rank") String rank);
+
+  @Query("""
+          SELECT a FROM UserGuardAssignment a
+          JOIN a.officers o
+          WHERE o.id = :officerId
+      """)
+  List<UserGuardAssignment> findByOfficerId(Long officerId);
+
+  List<UserGuardAssignment> findByOfficers_Id(Long officerId);
 }

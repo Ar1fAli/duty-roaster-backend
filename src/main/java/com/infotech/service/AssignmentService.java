@@ -170,6 +170,47 @@ public class AssignmentService {
       officer.getAssignments().add(savedAssignment);
 
       officerRepository.save(officer);
+
+      NotificationManagement existingNotification = notificationManagementRepo
+          .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(officer.getId(),
+              "guard");
+
+      // ✅ Get token from existing record
+      String officerFcmToken = existingNotification != null
+          ? existingNotification.getNotificationToken()
+          : null;
+
+      // ✅ Send notification immediately
+      service.sendNotificationSafely(
+          officerFcmToken,
+          "Duty Assign",
+          "Go And Check Your Duty From The Portal",
+          "officer",
+          officer.getId());
+
+      // Optional<UserGuardAssignment> exist = inactivePrev
+      // .stream()
+      // .filter(a -> a.getOfficer().getId()
+      // .equals(officer.getId()))
+      // .findFirst();
+      //
+      // Create notification records (but use token from lookup)
+      NotificationManagement notification = new NotificationManagement();
+      // NotificationGuard notificationGuard = new NotificationGuard();
+      // notificationGuard.setRead(false);
+      // notificationGuard.setOfficer(officer);
+      // notificationGuard.setMessage("New Duty Assign Please Check Your Duty");
+
+      notification.setNotificationSenderId(officer.getId());
+      notification.setNotificationSender("guard");
+      notification.setNotificationSenderName(officer.getName());
+      notification.setNotificationMessage("New Duty Assign Please Check Your  Duty");
+      notification.setNotificationToken(officerFcmToken); // Use the looked-up token
+      notification.setNotificationStatus(false);
+      notification.setNotificationAssignTime(LocalDateTime.now());
+
+      notificationManagementRepo.save(notification);
+
     }
 
     category.setStatus("Active");
@@ -178,6 +219,55 @@ public class AssignmentService {
     }
     category.getAssignments().add(savedAssignment);
     categoryRepository.save(category);
+    NotificationManagement existingVipNotification = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(category.getId(), "vip");
+
+    String vipFcmToken = existingVipNotification != null
+        ? existingVipNotification.getNotificationToken()
+        : null;
+
+    // Send notification with existing token
+    service.sendNotificationSafely(
+        vipFcmToken,
+        "Duty Assign",
+        "For More Detail Check It From The Portal",
+        "category",
+        category.getId());
+
+    // THEN create new notification record
+    NotificationManagement notificationcat = new NotificationManagement();
+    notificationcat.setNotificationSenderId(category.getId());
+    notificationcat.setNotificationSender("vip");
+    notificationcat.setNotificationSenderName(category.getName());
+    notificationcat.setNotificationMessage("Duty Assign Successfully");
+    notificationcat.setNotificationToken(vipFcmToken); // Use looked-up token
+    notificationcat.setNotificationStatus(false);
+    notificationcat.setNotificationAssignTime(LocalDateTime.now());
+
+    notificationManagementRepo.save(notificationcat);
+
+    AdminEntity admin = adminRepository.findById(1L)
+        .orElseThrow(() -> new RuntimeException("Admin not found"));
+    // AdminEntity admin = adminRepository.findById(1L).orElse(null);
+    NotificationManagement notificationadmin = notificationManagementRepo
+        .findTopByNotificationSenderIdAndNotificationSenderOrderByNotificationAssignTimeDesc(admin.getId(), "admin");
+
+    String adminFcmToken = notificationadmin != null
+        ? notificationadmin.getNotificationToken()
+        : null;
+    NotificationManagement notificationtoadmin = new NotificationManagement();
+    notificationtoadmin.setNotificationSenderId(admin.getId());
+    notificationtoadmin.setNotificationSender("admin");
+    notificationtoadmin.setNotificationSenderName(admin.getAdminName());
+    notificationtoadmin
+        .setNotificationMessage("Duty Assign Successfully For The Vip And Name Is ==>  " + category.getName());
+    if (notificationadmin != null) {
+      notificationtoadmin.setNotificationToken(adminFcmToken); // Use looked-up token
+    }
+    notificationtoadmin.setNotificationStatus(false);
+    notificationtoadmin.setNotificationAssignTime(LocalDateTime.now());
+
+    notificationManagementRepo.save(notificationtoadmin);
 
     AssignmentResponse response = new AssignmentResponse();
     response.setSummary(summaries);
@@ -526,28 +616,15 @@ public class AssignmentService {
     //
     //
 
-    UserGuardAssignment assignment = category.getAssignments().stream().filter(a -> ACTIVE_STATUS.equals(a.getStatus()))
-        .findFirst().get();
-    AssignmentResponsedto assignmentresponse = new AssignmentResponsedto();
+    List<UserGuardAssignment> assignments = assignmentRepository.findByCategory_Id(categoryId);
 
-    if (assignment != null) {
+    AssignmentResponsedto response = assignments.stream()
+        .filter(a -> ACTIVE_STATUS.equalsIgnoreCase(a.getStatus()))
+        .findFirst()
+        .map(this::mapToDto)
+        .orElseThrow(() -> new RuntimeException("No ACTIVE assignment found for categoryId: " + categoryId));
 
-      System.out.println(assignment.getId() + "assigment values");
-      assignmentresponse.setId(assignment.getId());
-      assignmentresponse.setEndAt(assignment.getEndAt());
-      assignmentresponse.setAtEnd(assignment.getAtEnd());
-      assignmentresponse.setStatus(assignment.getStatus());
-      assignmentresponse.setOfficer(assignment.getOfficers());
-    }
-
-    if (category != null) {
-
-      assignmentresponse.setCategory(assignment.getCategory());
-    }
-    assignmentresponse.setAssignedAt(assignment.getAssignedAt());
-    assignmentresponse.setStartAt(assignment.getStartAt());
-
-    return assignmentresponse;
+    return response;
 
     // Keep only active-duty rows
     // List<UserGuardAssignment> active = Optional.ofNullable(all)
@@ -586,6 +663,18 @@ public class AssignmentService {
     // resp.setDetails(active);
     //
     // return resp;
+  }
+
+  private AssignmentResponsedto mapToDto(UserGuardAssignment a) {
+    AssignmentResponsedto dto = new AssignmentResponsedto();
+    dto.setId(a.getId());
+    dto.setEndAt(a.getEndAt());
+    dto.setAtEnd(a.getAtEnd());
+    dto.setAssignedAt(a.getAssignedAt());
+    dto.setStartAt(a.getStartAt());
+    dto.setStatus(a.getStatus());
+    dto.setOfficer(a.getOfficers());
+    return dto;
   }
 
   //
@@ -1026,21 +1115,39 @@ public class AssignmentService {
     officerRepository.findById(officerId)
         .orElseThrow(() -> new RuntimeException("Officer not found: " + officerId));
 
-    return assignmentHistoryRepository.findAll().stream()
-        .filter(a -> a.getOfficer() != null &&
-            a.getOfficer().stream()
-                .anyMatch(o -> o.getId().equals(officerId)))
+    return assignmentRepository.findByOfficers_Id(officerId)
+        .stream()
         .map(a -> {
           GuardDutyHistorydto dto = new GuardDutyHistorydto();
           dto.setAssignmentId(a.getId());
-          dto.setVipname(a.getCategory().stream().findFirst().get().getName());
-          dto.setDesignation(a.getCategory().stream().findFirst().get().getDesignation());
+
+          // CATEGORY IS SINGLE (VIP)
+          if (a.getCategory() != null) {
+            dto.setVipname(a.getCategory().getName());
+            dto.setDesignation(a.getCategory().getDesignation());
+          }
+
           dto.setStartTime(a.getStartAt());
           dto.setEndTime(a.getEndAt());
           dto.setStatus(a.getStatus());
           return dto;
         })
         .collect(Collectors.toList());
+    // return assignmentHistoryRepository.findAll().stream()
+    // .filter(a -> a.getOfficer() != null &&
+    // a.getOfficer().stream()
+    // .anyMatch(o -> o.getId().equals(officerId)))
+    // .map(a -> {
+    // GuardDutyHistorydto dto = new GuardDutyHistorydto();
+    // dto.setAssignmentId(a.getId());
+    // dto.setVipname(a.getCategory().stream().findFirst().get().getName());
+    // dto.setDesignation(a.getCategory().stream().findFirst().get().getDesignation());
+    // dto.setStartTime(a.getStartAt());
+    // dto.setEndTime(a.getEndAt());
+    // dto.setStatus(a.getStatus());
+    // return dto;
+    // })
+    // .collect(Collectors.toList());
   }
   // @Transactional(readOnly = true)
   // public List<GuardDutyHistorydto> getGuardHistory(Long officerId) {
@@ -1087,17 +1194,19 @@ public class AssignmentService {
   // }
   //
   @Transactional(readOnly = true)
-  public List<AssignmentHistoryEntity> getVipHistory(Long categoryId) {
+  public List<UserGuardAssignment> getVipHistory(Long categoryId) {
 
     categoryRepository.findById(categoryId)
         .orElseThrow(() -> new RuntimeException(
             "Category not found for id: " + categoryId));
 
+    List<UserGuardAssignment> userGuardAssignment = assignmentRepository.findByCategory_Id(categoryId);
+
     List<AssignmentHistoryEntity> assignment = assignmentHistoryRepository.findAll().stream()
         .filter(a -> a.getCategory().stream()
             .anyMatch(c -> c.getId().equals(categoryId)))
         .toList();
-    return assignment;
+    return userGuardAssignment;
   }
 
   private CategoryDto mapCategory(Category c) {
